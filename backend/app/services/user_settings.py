@@ -17,6 +17,9 @@ _sessions: OrderedDict[str, tuple[str, float]] = OrderedDict()
 
 
 def session_credential(request: Request) -> tuple[str, int] | None:
+    header_key = request.headers.get("x-gemini-key")
+    if header_key and len(header_key.strip()) >= 20:
+        return header_key.strip(), SESSION_SECONDS
     session_id = request.cookies.get(COOKIE_NAME, "")
     entry = _sessions.get(session_id)
     if entry and entry[1] > time.monotonic():

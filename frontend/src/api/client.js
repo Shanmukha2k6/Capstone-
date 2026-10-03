@@ -158,10 +158,15 @@ async function directGitHubRequest(path, token, options = {}) {
 }
 
 async function githubRequest(path, token, options = {}) {
+  const geminiKey = getStoredKey();
   const res = await fetch(`${BASE_URL}/repos${path}`, {
     ...options,
     credentials: "include",
-    headers: { ...options.headers, ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+    headers: {
+      ...options.headers,
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(geminiKey ? { "X-Gemini-Key": geminiKey } : {})
+    },
   });
   if (!res.ok) {
     const error = await res.json().catch(() => ({}));
@@ -171,34 +176,51 @@ async function githubRequest(path, token, options = {}) {
 }
 
 async function geminiSettingsRequest(method = "GET", apiKey) {
-  try {
-    const res = await fetch(`${BASE_URL}/settings/gemini`, {
-      method, credentials: "include", cache: "no-store",
-      headers: { "Content-Type": "application/json", "X-DevMind-Settings": "1" },
-      ...(apiKey !== undefined ? { body: JSON.stringify({ api_key: apiKey }) } : {}),
-    });
-    if (res.ok) {
-      const data = await res.json();
-      if (method === "POST" && apiKey) {
-        setStoredKey(apiKey);
-      } else if (method === "DELETE") {
-        setStoredKey("");
-      }
-      return data;
+  if (method === "POST") {
+    const trimmed = (apiKey || "").trim();
+    if (trimmed.length < 20) {
+      throw new Error("Enter a valid Gemini API key (at least 20 characters).");
     }
-    const error = await res.json().catch(() => ({}));
-    throw new Error(typeof error.detail === "string" ? error.detail : "Could not update Gemini settings. Try again.");
-  } catch (err) {
-    if (!isNetworkError(err)) throw err;
-    if (method === "POST") {
-      const trimmed = (apiKey || "").trim();
-      if (trimmed.length < 20) {
-        throw new Error("Enter a valid Gemini API key (at least 20 characters).");
-      }
-      setStoredKey(trimmed);
-      cachedGeminiModel = null;
-      cachedModelList = null;
-      const model = await resolveActiveGeminiModel(trimmed);
+    setStoredKey(trimmed);
+    cachedGeminiModel = null;
+    cachedModelList = null;
+    const model = await resolveActiveGeminiModel(trimmed);
+    try {
+      await fetch(`${BASE_URL}/settings/gemini`, {
+        method: "POST", credentials: "include", cache: "no-store",
+        headers: { "Content-Type": "application/json", "X-DevMind-Settings": "1", "X-Gemini-Key": trimmed },
+        body: JSON.stringify({ api_key: trimmed }),
+      });
+    } catch {}
+    return {
+      configured: true,
+      session_key: true,
+      source: "session",
+      model: model,
+      expires_in_seconds: 28800
+    };
+  } else if (method === "DELETE") {
+    setStoredKey("");
+    cachedGeminiModel = null;
+    cachedModelList = null;
+    try {
+      await fetch(`${BASE_URL}/settings/gemini`, {
+        method: "DELETE", credentials: "include", cache: "no-store",
+        headers: { "Content-Type": "application/json", "X-DevMind-Settings": "1" }
+      });
+    } catch {}
+    return {
+      configured: false,
+      session_key: false,
+      source: "none",
+      model: FALLBACK_MODELS[0],
+      expires_in_seconds: null
+    };
+  } else {
+    // GET
+    const localKey = getStoredKey();
+    if (localKey) {
+      const model = await resolveActiveGeminiModel(localKey);
       return {
         configured: true,
         session_key: true,
@@ -206,28 +228,23 @@ async function geminiSettingsRequest(method = "GET", apiKey) {
         model: model,
         expires_in_seconds: 28800
       };
-    } else if (method === "DELETE") {
-      setStoredKey("");
-      cachedGeminiModel = null;
-      cachedModelList = null;
-      return {
-        configured: false,
-        session_key: false,
-        source: "none",
-        model: FALLBACK_MODELS[0],
-        expires_in_seconds: null
-      };
-    } else {
-      const localKey = getStoredKey();
-      const model = await resolveActiveGeminiModel(localKey);
-      return {
-        configured: Boolean(localKey),
-        session_key: Boolean(localKey),
-        source: localKey ? "session" : "none",
-        model: model,
-        expires_in_seconds: localKey ? 28800 : null
-      };
     }
+    try {
+      const res = await fetch(`${BASE_URL}/settings/gemini`, {
+        method: "GET", credentials: "include", cache: "no-store",
+        headers: { "Content-Type": "application/json", "X-DevMind-Settings": "1" }
+      });
+      if (res.ok) {
+        return await res.json();
+      }
+    } catch {}
+    return {
+      configured: false,
+      session_key: false,
+      source: "none",
+      model: FALLBACK_MODELS[0],
+      expires_in_seconds: null
+    };
   }
 }
 
@@ -628,19 +645,32 @@ export const api = {
   },
 
   async getMalwareScanConfig() {
+    const key = getStoredKey();
+    if (key) {
+      const model = await resolveActiveGeminiModel(key);
+      return {
+        provider: "gemini",
+        configured: true,
+        session_key: true,
+        source: "session",
+        model: model,
+        expires_in_seconds: 28800,
+        enabled: true,
+        max_files_limit: 12,
+        default_files: 8
+      };
+    }
     try {
       return await githubRequest("/scan-config");
     } catch (err) {
       if (!isNetworkError(err)) throw err;
-      const key = getStoredKey();
-      const model = await resolveActiveGeminiModel(key);
       return {
         provider: "gemini",
-        configured: Boolean(key),
-        session_key: Boolean(key),
-        source: key ? "session" : "none",
-        model: model,
-        expires_in_seconds: key ? 28800 : null,
+        configured: false,
+        session_key: false,
+        source: "none",
+        model: FALLBACK_MODELS[0],
+        expires_in_seconds: null,
         enabled: true,
         max_files_limit: 12,
         default_files: 8
@@ -649,14 +679,18 @@ export const api = {
   },
 
   async scanRepoMalware(owner, repo, maxFiles = 12, token = "") {
+    const key = getStoredKey();
+    if (key) {
+      return await directGeminiMalwareScan(owner, repo, maxFiles, token, key);
+    }
     try {
       return await githubRequest(`/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/malware-scan`, token,
         { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ max_files: maxFiles }) });
     } catch (err) {
-      if (!isNetworkError(err)) throw err;
-      const key = getStoredKey();
-      if (!key) throw new Error("Add your Gemini API key in Settings to run a source security review.");
-      return await directGeminiMalwareScan(owner, repo, maxFiles, token, key);
+      if (err.message && (err.message.includes("API key") || isNetworkError(err))) {
+        throw new Error("Add your Gemini API key in Settings to run a source security review.");
+      }
+      throw err;
     }
   },
 
