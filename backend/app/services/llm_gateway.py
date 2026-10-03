@@ -266,7 +266,7 @@ class MockProvider(LLMProvider):
 
 
 class GeminiProvider(LLMProvider):
-    def __init__(self, api_key: str, model_name: str = "gemini-3.8-flash", initialize: bool = True):
+    def __init__(self, api_key: str, model_name: str = "gemini-2.5-flash", initialize: bool = True):
         self.api_key = api_key
         self.model_name = model_name
         self._client = None

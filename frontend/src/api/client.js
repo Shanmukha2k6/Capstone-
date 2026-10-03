@@ -2,10 +2,20 @@ const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
 const GITHUB_API = "https://api.github.com";
 const LOCAL_GEMINI_KEY = "devmind_gemini_key";
 
-let cachedGeminiModel = "gemini-2.5-flash";
+const FALLBACK_MODELS = [
+  "gemini-2.5-flash",
+  "gemini-2.0-flash",
+  "gemini-2.5-pro",
+  "gemini-2.0-flash-exp",
+  "gemini-flash"
+];
 
-async function resolveActiveGeminiModel(apiKey) {
-  if (!apiKey) return cachedGeminiModel;
+let cachedGeminiModel = null;
+let cachedModelList = null;
+
+async function getAvailableGeminiModels(apiKey) {
+  if (!apiKey) return FALLBACK_MODELS;
+  if (cachedModelList && cachedModelList.length > 0) return cachedModelList;
   try {
     const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
     if (res.ok) {
@@ -13,17 +23,49 @@ async function resolveActiveGeminiModel(apiKey) {
       const valid = (data.models || [])
         .filter((m) => (m.supportedGenerationMethods || []).includes("generateContent"))
         .map((m) => m.name.replace(/^models\//, ""));
-      const preferred = valid.find((name) => name.includes("2.5-flash"))
-        || valid.find((name) => name.includes("2.0-flash"))
-        || valid.find((name) => name.includes("flash"))
-        || valid[0];
-      if (preferred) {
-        cachedGeminiModel = preferred;
-        return preferred;
+      if (valid.length > 0) {
+        cachedModelList = valid;
+        return valid;
       }
     }
   } catch {}
-  return cachedGeminiModel;
+  return FALLBACK_MODELS;
+}
+
+async function resolveActiveGeminiModel(apiKey) {
+  if (!apiKey) return cachedGeminiModel || FALLBACK_MODELS[0];
+  if (cachedGeminiModel) return cachedGeminiModel;
+  const models = await getAvailableGeminiModels(apiKey);
+  const chosen = models.find((m) => m.includes("2.5-flash"))
+    || models.find((m) => m.includes("2.0-flash"))
+    || models.find((m) => m.toLowerCase().includes("flash"))
+    || models[0]
+    || FALLBACK_MODELS[0];
+  cachedGeminiModel = chosen;
+  return chosen;
+}
+
+async function callGeminiWithFallback(apiKey, callFn) {
+  let model = await resolveActiveGeminiModel(apiKey);
+  try {
+    return await callFn(model);
+  } catch (err) {
+    if (err.message && (err.message.includes("not found") || err.message.includes("404"))) {
+      cachedModelList = null;
+      const models = await getAvailableGeminiModels(apiKey);
+      for (const altModel of models) {
+        if (altModel === model) continue;
+        try {
+          const res = await callFn(altModel);
+          cachedGeminiModel = altModel;
+          return res;
+        } catch (retryErr) {
+          if (!retryErr.message?.includes("not found") && !retryErr.message?.includes("404")) throw retryErr;
+        }
+      }
+    }
+    throw err;
+  }
 }
 
 const IGNORED_PATTERNS = [
@@ -153,6 +195,8 @@ async function geminiSettingsRequest(method = "GET", apiKey) {
         throw new Error("Enter a valid Gemini API key (at least 20 characters).");
       }
       setStoredKey(trimmed);
+      cachedGeminiModel = null;
+      cachedModelList = null;
       const model = await resolveActiveGeminiModel(trimmed);
       return {
         configured: true,
@@ -163,11 +207,13 @@ async function geminiSettingsRequest(method = "GET", apiKey) {
       };
     } else if (method === "DELETE") {
       setStoredKey("");
+      cachedGeminiModel = null;
+      cachedModelList = null;
       return {
         configured: false,
         session_key: false,
         source: "none",
-        model: cachedGeminiModel,
+        model: FALLBACK_MODELS[0],
         expires_in_seconds: null
       };
     } else {
@@ -185,84 +231,91 @@ async function geminiSettingsRequest(method = "GET", apiKey) {
 }
 
 async function streamDirectGemini(apiKey, repoName, messages, context, onToken, onDone) {
-  const model = await resolveActiveGeminiModel(apiKey);
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:streamGenerateContent?alt=sse&key=${apiKey}`;
-  const systemPrompt = `You are DevMind AI, an expert software engineering assistant. You help developers understand, inspect, refactor, and secure their code. Context: ${repoName || "Project"}.${context ? `\n\n${context}` : ""}`;
+  return callGeminiWithFallback(apiKey, async (model) => {
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:streamGenerateContent?alt=sse&key=${apiKey}`;
+    const systemPrompt = `You are DevMind AI, an expert software engineering assistant. You help developers understand, inspect, refactor, and secure their code. Context: ${repoName || "Project"}.${context ? `\n\n${context}` : ""}`;
 
-  const contents = (messages || []).map((m) => ({
-    role: m.role === "assistant" ? "model" : "user",
-    parts: [{ text: m.content || "" }]
-  }));
+    const contents = (messages || []).map((m) => ({
+      role: m.role === "assistant" ? "model" : "user",
+      parts: [{ text: m.content || "" }]
+    }));
 
-  const res = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      systemInstruction: { parts: [{ text: systemPrompt }] },
-      contents: contents.length ? contents : [{ role: "user", parts: [{ text: "Hello" }] }],
-      generationConfig: { temperature: 0.4, maxOutputTokens: 4096 }
-    })
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        systemInstruction: { parts: [{ text: systemPrompt }] },
+        contents: contents.length ? contents : [{ role: "user", parts: [{ text: "Hello" }] }],
+        generationConfig: { temperature: 0.4, maxOutputTokens: 4096 }
+      })
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      if (res.status === 404) {
+        throw new Error(err.error?.message || `models/${model} is not found`);
+      }
+      if (res.status === 400 || res.status === 401 || res.status === 403) {
+        throw new Error("Gemini rejected the API key. Please check your API key in Settings.");
+      }
+      throw new Error(err.error?.message || `Gemini request failed (HTTP ${res.status})`);
+    }
+
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = "";
+
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split("\n");
+      buffer = lines.pop() || "";
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed.startsWith("data:")) continue;
+        const jsonStr = trimmed.slice(5).trim();
+        if (!jsonStr) continue;
+        try {
+          const parsed = JSON.parse(jsonStr);
+          const text = parsed.candidates?.[0]?.content?.parts?.[0]?.text;
+          if (text) onToken(text);
+        } catch {}
+      }
+    }
+    onDone?.();
   });
-
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    if (res.status === 400 || res.status === 401 || res.status === 403) {
-      throw new Error("Gemini rejected the API key. Please check your API key in Settings.");
-    }
-    throw new Error(err.error?.message || `Gemini request failed (HTTP ${res.status})`);
-  }
-
-  const reader = res.body.getReader();
-  const decoder = new TextDecoder();
-  let buffer = "";
-
-  while (true) {
-    const { value, done } = await reader.read();
-    if (done) break;
-    buffer += decoder.decode(value, { stream: true });
-    const lines = buffer.split("\n");
-    buffer = lines.pop() || "";
-    for (const line of lines) {
-      const trimmed = line.trim();
-      if (!trimmed.startsWith("data:")) continue;
-      const jsonStr = trimmed.slice(5).trim();
-      if (!jsonStr) continue;
-      try {
-        const parsed = JSON.parse(jsonStr);
-        const text = parsed.candidates?.[0]?.content?.parts?.[0]?.text;
-        if (text) onToken(text);
-      } catch {}
-    }
-  }
-  onDone?.();
 }
 
 async function directGeminiJson(apiKey, prompt, systemPrompt) {
-  const model = await resolveActiveGeminiModel(apiKey);
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
-  const res = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      systemInstruction: systemPrompt ? { parts: [{ text: systemPrompt }] } : undefined,
-      contents: [{ role: "user", parts: [{ text: prompt }] }],
-      generationConfig: {
-        temperature: 0.2,
-        responseMimeType: "application/json"
+  return callGeminiWithFallback(apiKey, async (model) => {
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        systemInstruction: systemPrompt ? { parts: [{ text: systemPrompt }] } : undefined,
+        contents: [{ role: "user", parts: [{ text: prompt }] }],
+        generationConfig: {
+          temperature: 0.2,
+          responseMimeType: "application/json"
+        }
+      })
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      if (res.status === 404) {
+        throw new Error(err.error?.message || `models/${model} is not found`);
       }
-    })
+      throw new Error(err.error?.message || `Gemini API error (${res.status})`);
+    }
+    const data = await res.json();
+    const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
+    return JSON.parse(text);
   });
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err.error?.message || `Gemini API error (${res.status})`);
-  }
-  const data = await res.json();
-  const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
-  return JSON.parse(text);
 }
 
 async function directGeminiMalwareScan(owner, repo, maxFiles, token, apiKey) {
-  const model = await resolveActiveGeminiModel(apiKey);
   const repoInfo = await directGitHubRequest(`/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}`, token);
   const defaultBranch = repoInfo.default_branch || "main";
   const commit = await directGitHubRequest(`/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/commits/${encodeURIComponent(defaultBranch)}`, token);
@@ -370,12 +423,13 @@ ${manifest}
   }
 
   const verdict = verified.length > 0 ? "suspicious" : (rejected > 0 ? "inconclusive" : "no_indicators_in_scanned_files");
+  const activeModel = cachedGeminiModel || "gemini-2.5-flash";
 
   return {
     repository: `${owner}/${repo}`,
     revision,
     branch: defaultBranch,
-    model: model,
+    model: activeModel,
     verdict,
     summary: analysis.summary || (verdict === "no_indicators_in_scanned_files" ? "No malware indicators detected in the scanned source files." : "Security review complete."),
     findings: verified,
