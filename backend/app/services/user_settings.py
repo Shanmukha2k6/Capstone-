@@ -38,10 +38,19 @@ def key_status(request: Request) -> GeminiKeyStatus:
         model=settings.GEMINI_MODEL, expires_in_seconds=entry[1] if entry else None)
 
 
+def is_allowed_origin(origin: str) -> bool:
+    if not origin or origin in settings.ALLOWED_ORIGINS:
+        return True
+    import re
+    return bool(re.match(r"^https://.*\.vercel\.app$|^https://.*\.netlify\.app$|^http://localhost(:\d+)?$|^http://127\.0\.0\.1(:\d+)?$", origin))
+
+
 def require_settings_request(request: Request) -> None:
     origin = request.headers.get("origin")
-    if request.headers.get("x-devmind-settings") != "1" or (origin and origin not in settings.ALLOWED_ORIGINS):
+    if request.headers.get("x-devmind-settings") != "1" or (origin and not is_allowed_origin(origin)):
         raise HTTPException(403, "Use the DevMind settings page to change your session key.")
+
+
 
 
 def save_key(request: Request, response: Response, api_key: str) -> GeminiKeyStatus:

@@ -19,7 +19,7 @@ class Settings(BaseSettings):
     LLM_PROVIDER: str = "gemini"  # "gemini" | "openai" | "mock"
     GEMINI_API_KEY: str = ""
     OPENAI_API_KEY: str = ""
-    GEMINI_MODEL: str = "gemini-3.8-flash"
+    GEMINI_MODEL: str = "gemini-1.5-flash"
     OPENAI_MODEL: str = "gpt-4o-mini"
     
     # GitHub Integration

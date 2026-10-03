@@ -1,5 +1,6 @@
 const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
 const GITHUB_API = "https://api.github.com";
+const LOCAL_GEMINI_KEY = "devmind_gemini_key";
 
 const IGNORED_PATTERNS = [
   "node_modules", ".git", "venv", ".venv", "__pycache__", "dist", "build",
@@ -40,6 +41,26 @@ function isNetworkError(err) {
   );
 }
 
+function getStoredKey() {
+  try {
+    return sessionStorage.getItem(LOCAL_GEMINI_KEY) || localStorage.getItem(LOCAL_GEMINI_KEY) || "";
+  } catch {
+    return "";
+  }
+}
+
+function setStoredKey(key) {
+  try {
+    if (key) {
+      sessionStorage.setItem(LOCAL_GEMINI_KEY, key);
+      localStorage.setItem(LOCAL_GEMINI_KEY, key);
+    } else {
+      sessionStorage.removeItem(LOCAL_GEMINI_KEY);
+      localStorage.removeItem(LOCAL_GEMINI_KEY);
+    }
+  } catch {}
+}
+
 async function directGitHubRequest(path, token, options = {}) {
   const headers = {
     Accept: "application/vnd.github+json",
@@ -74,16 +95,134 @@ async function githubRequest(path, token, options = {}) {
 }
 
 async function geminiSettingsRequest(method = "GET", apiKey) {
-  const res = await fetch(`${BASE_URL}/settings/gemini`, {
-    method, credentials: "include", cache: "no-store",
-    headers: { "Content-Type": "application/json", "X-DevMind-Settings": "1" },
-    ...(apiKey !== undefined ? { body: JSON.stringify({ api_key: apiKey }) } : {}),
-  });
-  if (!res.ok) {
+  try {
+    const res = await fetch(`${BASE_URL}/settings/gemini`, {
+      method, credentials: "include", cache: "no-store",
+      headers: { "Content-Type": "application/json", "X-DevMind-Settings": "1" },
+      ...(apiKey !== undefined ? { body: JSON.stringify({ api_key: apiKey }) } : {}),
+    });
+    if (res.ok) {
+      const data = await res.json();
+      if (method === "POST" && apiKey) {
+        setStoredKey(apiKey);
+      } else if (method === "DELETE") {
+        setStoredKey("");
+      }
+      return data;
+    }
     const error = await res.json().catch(() => ({}));
     throw new Error(typeof error.detail === "string" ? error.detail : "Could not update Gemini settings. Try again.");
+  } catch (err) {
+    if (!isNetworkError(err)) throw err;
+    // Backend offline / network error: use browser session storage fallback
+    if (method === "POST") {
+      const trimmed = (apiKey || "").trim();
+      if (trimmed.length < 20) {
+        throw new Error("Enter a valid Gemini API key (at least 20 characters).");
+      }
+      setStoredKey(trimmed);
+      return {
+        configured: true,
+        session_key: true,
+        source: "session",
+        model: "gemini-1.5-flash",
+        expires_in_seconds: 28800
+      };
+    } else if (method === "DELETE") {
+      setStoredKey("");
+      return {
+        configured: false,
+        session_key: false,
+        source: "none",
+        model: "gemini-1.5-flash",
+        expires_in_seconds: null
+      };
+    } else {
+      const localKey = getStoredKey();
+      return {
+        configured: Boolean(localKey),
+        session_key: Boolean(localKey),
+        source: localKey ? "session" : "none",
+        model: "gemini-1.5-flash",
+        expires_in_seconds: localKey ? 28800 : null
+      };
+    }
   }
-  return res.json();
+}
+
+async function streamDirectGemini(apiKey, repoName, messages, context, onToken, onDone) {
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:streamGenerateContent?alt=sse&key=${apiKey}`;
+  const systemPrompt = `You are DevMind AI, an expert software engineering assistant. You help developers understand, inspect, refactor, and secure their code. Context: ${repoName || "Project"}.${context ? `\n\n${context}` : ""}`;
+
+  const contents = (messages || []).map((m) => ({
+    role: m.role === "assistant" ? "model" : "user",
+    parts: [{ text: m.content || "" }]
+  }));
+
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      systemInstruction: { parts: [{ text: systemPrompt }] },
+      contents: contents.length ? contents : [{ role: "user", parts: [{ text: "Hello" }] }],
+      generationConfig: { temperature: 0.4, maxOutputTokens: 4096 }
+    })
+  });
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    if (res.status === 400 || res.status === 401 || res.status === 403) {
+      throw new Error("Gemini rejected the API key. Please check your API key in Settings.");
+    }
+    throw new Error(err.error?.message || `Gemini request failed (HTTP ${res.status})`);
+  }
+
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+
+  while (true) {
+    const { value, done } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+    const lines = buffer.split("\n");
+    buffer = lines.pop() || "";
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (!trimmed.startsWith("data:")) continue;
+      const jsonStr = trimmed.slice(5).trim();
+      if (!jsonStr) continue;
+      try {
+        const parsed = JSON.parse(jsonStr);
+        const text = parsed.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (text) onToken(text);
+      } catch {}
+    }
+  }
+  onDone?.();
+}
+
+async function directGeminiJson(apiKey, prompt, systemPrompt) {
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      systemInstruction: systemPrompt ? { parts: [{ text: systemPrompt }] } : undefined,
+      contents: [{ role: "user", parts: [{ text: prompt }] }],
+      generationConfig: {
+        temperature: 0.2,
+        responseMimeType: "application/json"
+      }
+    })
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error?.message || `Gemini API error (${res.status})`);
+  }
+  const data = await res.json();
+  const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
+  return JSON.parse(text);
 }
 
 async function readChatStream(response, onToken, onDone) {
@@ -116,69 +255,104 @@ async function readChatStream(response, onToken, onDone) {
 
 export const api = {
   async getChatConfig() {
-    const response = await fetch(`${BASE_URL}/chat/config`, { credentials: "include", cache: "no-store" });
-    if (!response.ok) throw new Error("Could not check the assistant connection.");
-    return response.json();
+    try {
+      const response = await fetch(`${BASE_URL}/chat/config`, { credentials: "include", cache: "no-store" });
+      if (response.ok) return response.json();
+    } catch (err) {
+      if (!isNetworkError(err)) throw err;
+    }
+    const localKey = getStoredKey();
+    return {
+      provider: localKey ? "gemini" : "mock",
+      model: localKey ? "gemini-1.5-flash" : "demo",
+      gemini_configured: Boolean(localKey)
+    };
   },
   getGeminiSettings: () => geminiSettingsRequest(),
   saveGeminiKey: (apiKey) => geminiSettingsRequest("POST", apiKey),
   removeGeminiKey: () => geminiSettingsRequest("DELETE"),
   async checkHealth() {
-    const res = await fetch(`${BASE_URL}/health`);
-    if (!res.ok) throw new Error("Backend offline");
-    return res.json();
+    try {
+      const res = await fetch(`${BASE_URL}/health`);
+      if (res.ok) return res.json();
+    } catch {}
+    return { status: "offline", provider: "client-direct" };
   },
 
   async explainCode(code, language = "python", level = "intermediate") {
-    const res = await fetch(`${BASE_URL}/analyze/explain`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ code, language, level })
-    });
-    if (!res.ok) {
+    try {
+      const res = await fetch(`${BASE_URL}/analyze/explain`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code, language, level })
+      });
+      if (res.ok) return res.json();
       const err = await res.json().catch(() => ({ detail: "Analysis failed" }));
       throw new Error(err.detail || "Failed to explain code");
+    } catch (err) {
+      if (!isNetworkError(err)) throw err;
+      const key = getStoredKey();
+      if (!key) throw new Error("DevMind backend is offline. Enter a Gemini API key in Settings to analyze code.");
+      const prompt = `Explain this ${language} code for a ${level} developer:\n\`\`\`${language}\n${code}\n\`\`\`\nReturn JSON with keys: purpose (string), walkthrough (array of strings), key_concepts (array of strings), time_complexity (string), space_complexity (string), pitfalls (array of strings), line_notes (array of {line: number, note: string}).`;
+      return directGeminiJson(key, prompt, "You are a code tutor providing clear, accurate analysis in JSON format.");
     }
-    return res.json();
   },
 
   async scanBugs(code, language = "python") {
-    const res = await fetch(`${BASE_URL}/analyze/bugs`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ code, language })
-    });
-    if (!res.ok) {
+    try {
+      const res = await fetch(`${BASE_URL}/analyze/bugs`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code, language })
+      });
+      if (res.ok) return res.json();
       const err = await res.json().catch(() => ({ detail: "Scan failed" }));
       throw new Error(err.detail || "Failed to scan bugs");
+    } catch (err) {
+      if (!isNetworkError(err)) throw err;
+      const key = getStoredKey();
+      if (!key) throw new Error("DevMind backend is offline. Enter a Gemini API key in Settings to scan bugs.");
+      const prompt = `Analyze this ${language} code for bugs and security vulnerabilities:\n\`\`\`${language}\n${code}\n\`\`\`\nReturn JSON with keys: summary (string), findings (array of {id: string, title: string, severity: 'critical'|'high'|'medium'|'low'|'info', category: string, cwe: string, line_start: number, line_end: number, explanation: string, fix: string, fixed_code: string, confidence: number}).`;
+      return directGeminiJson(key, prompt, "You are an application security specialist analyzing code for vulnerabilities.");
     }
-    return res.json();
   },
 
   async suggestRefactor(code, language = "python", focus = "all") {
-    const res = await fetch(`${BASE_URL}/analyze/refactor`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ code, language, focus })
-    });
-    if (!res.ok) {
+    try {
+      const res = await fetch(`${BASE_URL}/analyze/refactor`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code, language, focus })
+      });
+      if (res.ok) return res.json();
       const err = await res.json().catch(() => ({ detail: "Refactor failed" }));
       throw new Error(err.detail || "Failed to get refactoring suggestions");
+    } catch (err) {
+      if (!isNetworkError(err)) throw err;
+      const key = getStoredKey();
+      if (!key) throw new Error("DevMind backend is offline. Enter a Gemini API key in Settings to suggest refactors.");
+      const prompt = `Suggest refactoring for this ${language} code focusing on ${focus}:\n\`\`\`${language}\n${code}\n\`\`\`\nReturn JSON with keys: summary (string), suggestions (array of {id: string, title: string, impact: 'high'|'medium'|'low', category: string, rationale: string, before_code: string, after_code: string, risk_level: string}).`;
+      return directGeminiJson(key, prompt, "You are a software architect improving code readability, performance, and structure.");
     }
-    return res.json();
   },
 
   async analyzeQuality(code, language = "python") {
-    const res = await fetch(`${BASE_URL}/analyze/quality`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ code, language })
-    });
-    if (!res.ok) {
+    try {
+      const res = await fetch(`${BASE_URL}/analyze/quality`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code, language })
+      });
+      if (res.ok) return res.json();
       const err = await res.json().catch(() => ({ detail: "Quality analysis failed" }));
       throw new Error(err.detail || "Failed to analyze code quality");
+    } catch (err) {
+      if (!isNetworkError(err)) throw err;
+      const key = getStoredKey();
+      if (!key) throw new Error("DevMind backend is offline. Enter a Gemini API key in Settings to analyze quality.");
+      const prompt = `Analyze quality metrics for this ${language} code:\n\`\`\`${language}\n${code}\n\`\`\`\nReturn JSON with keys: overall_score (number 0-100), dimensions ({maintainability: number, security: number, complexity: number, documentation: number}), metrics ({loc: number, comment_ratio: number, cyclomatic_complexity: number}), recommendations (array of strings).`;
+      return directGeminiJson(key, prompt, "You are a code auditor calculating quality scores and recommendations.");
     }
-    return res.json();
   },
 
   async generateReadme(projectName, description, techStack, features, codeSamples = []) {
@@ -324,11 +498,28 @@ export const api = {
         headers: { "Content-Type": "application/json", ...(expectedProvider ? { "X-DevMind-Provider": expectedProvider } : {}) },
         body: JSON.stringify({ repo_name: repoName, messages, context })
       });
-      if (!response.ok) {
-        const error = await response.json().catch(() => ({}));
-        throw new Error(typeof error.detail === "string" ? error.detail : "Could not connect to the assistant. Please retry.");
+      if (response.ok) {
+        await readChatStream(response, onToken, onDone);
+        return;
       }
-      await readChatStream(response, onToken, onDone);
-    } catch (err) { onError?.(err.message); }
+      const error = await response.json().catch(() => ({}));
+      throw new Error(typeof error.detail === "string" ? error.detail : "Could not connect to the assistant. Please retry.");
+    } catch (err) {
+      if (!isNetworkError(err)) {
+        onError?.(err.message);
+        return;
+      }
+      // Backend offline: direct client-side Gemini streaming
+      const localKey = getStoredKey();
+      if (!localKey) {
+        onError?.("DevMind backend is offline. Enter a Gemini API key in Settings to chat with Gemini directly.");
+        return;
+      }
+      try {
+        await streamDirectGemini(localKey, repoName, messages, context, onToken, onDone);
+      } catch (geminiErr) {
+        onError?.(geminiErr.message);
+      }
+    }
   }
 };
