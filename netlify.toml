@@ -1,7 +1,10 @@
 [build]
   base = "frontend"
   publish = "dist"
-  command = "npm run build"
+  command = "npm install --include=dev && npm run build"
+
+[build.environment]
+  NPM_FLAGS = "--include=dev"
 
 [[redirects]]
   from = "/*"
