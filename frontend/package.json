@@ -1,0 +1,40 @@
+{
+  "name": "devmind-frontend",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "test:rules": "node scripts/test-security-rules.mjs",
+    "test": "vitest run",
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@monaco-editor/react": "^4.6.0",
+    "clsx": "^2.1.1",
+    "firebase": "^12.19.0",
+    "lucide-react": "^0.359.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-markdown": "^9.0.1",
+    "recharts": "^2.12.3",
+    "tailwind-merge": "^2.2.2"
+  },
+  "overrides": {
+    "@grpc/grpc-js": "^1.13.6",
+    "dompurify": "^3.4.16"
+  },
+  "devDependencies": {
+    "@firebase/rules-unit-testing": "^5.0.2",
+    "@types/react": "^18.2.66",
+    "@types/react-dom": "^18.2.22",
+    "@vitejs/plugin-react": "^6.1.1",
+    "autoprefixer": "^10.4.19",
+    "postcss": "^8.4.38",
+    "react-test-renderer": "^18.3.1",
+    "tailwindcss": "^3.4.1",
+    "vite": "^8.3.1",
+    "vitest": "^5.0.3"
+  }
+}

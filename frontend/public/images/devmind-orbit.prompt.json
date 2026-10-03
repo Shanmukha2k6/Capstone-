@@ -1,0 +1,7 @@
+{
+  "tool": "Built-in image_gen.imagegen",
+  "mode": "generate",
+  "use_case": "stylized-concept",
+  "asset": "devmind-orbit.png",
+  "prompt": "Create an original premium 3D editorial illustration for a bold colorful developer app, no UI mockup. A playful sculptural abstract code engine: glossy orange capsule orbiting a lavender rounded cube, with one large saturated pink torus and small electric blue spheres. The shapes interlock into a single beautiful coherent floating sculpture. Simple geometric forms, sophisticated polished clay and glass materials, soft shadows, crisp silhouette. Wide 3:2 composition, centered object, background is solid deep vivid violet #6340e8 with subtle matching purple studio lighting. A few tiny spark-like geometric accents. Strong orange, pink, and lavender color contrast. No text, no letters, no logos, no people, no watermark. Main sculpture in right half, generous negative space in left third. Suitable for a compact software welcome card, joyful yet professional."
+}

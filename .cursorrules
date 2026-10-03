@@ -1,0 +1,9 @@
+# DevMind AI Cursor Rules
+- FastAPI backend, React + Tailwind + Firebase frontend.
+- Type hints everywhere, Pydantic v2, async endpoints.
+- Routers stay thin; business logic in services/.
+- All LLM calls through backend/app/services/llm_gateway.py only.
+- Prompts live in backend/app/prompts/, never hardcoded in routers.
+- Firebase handles Auth and Firestore database.
+- Functional React components, Tailwind styling, Lucide icons, Monaco editor.
+- Always validate schemas, sanitize prompts, and write pytest tests.

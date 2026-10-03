@@ -1,0 +1,81 @@
+.security-overview, .project-workspace, .findings-inbox { display: flex; flex-direction: column; gap: 24px; }
+.security-page-title { display: flex; align-items: center; justify-content: space-between; gap: 20px; margin: 4px 0 6px; }
+.security-kicker { font-size: 10px; letter-spacing: .12em; color: #999fbd; margin: 0 0 8px; }
+.security-page-title h1 { color: #f0f1f9; font-size: 30px; line-height: 1.25; letter-spacing: -.035em; margin: 0 0 8px; font-weight: 600; overflow-wrap: anywhere; }
+.security-page-title p:not(.security-kicker) { color: #a6adc5; font-size: 13px; margin: 0; line-height: 1.7; }
+.saas-primary, .saas-secondary { padding: 10px 15px; border-radius: 8px; font-size: 12px; white-space: nowrap; font-weight: 500; }
+.saas-primary { background: #7653dc; border: 1px solid #8765e8; color: white; }
+.saas-primary:hover { background: #8865e8; }
+.saas-secondary { background: #252a3c; border: 1px solid #3c435b; color: #d8ddef; }
+.saas-secondary:hover { background: #30374c; }
+.security-metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
+.security-metrics > div { border: 1px solid #2e3448; border-radius: 12px; background: #191e2c; padding: 20px; }
+.security-metrics span { color: #aeb7d1; font-size: 12px; display: block; }
+.security-metrics strong { color: #eef1fc; font-size: 32px; font-weight: 600; display: block; margin: 9px 0; }
+.security-metrics small { display: block; color: #7f8ba8; font-size: 10px; line-height: 1.6; }
+.security-columns { display: grid; grid-template-columns: 1.6fr 1fr; gap: 20px; }
+.saas-panel { background: #191e2c; border: 1px solid #30374b; border-radius: 12px; padding: 22px; }
+.saas-section-title { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-bottom: 18px; }
+.saas-section-title h2 { font-size: 16px; font-weight: 550; color: #e8ecf8; margin: 0; }
+.saas-section-title > span { color: #8592ae; font-size: 11px; }
+.saas-section-title button, .saas-text-button { color: #b7a2f2; font-size: 12px; background: transparent; border: 0; padding: 0; }
+.saas-project-row, .saas-review-row { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 16px 0; border-bottom: 1px solid #2b3246; text-align: left; }
+.saas-project-row { width: 100%; background: transparent; border: 0; border-bottom: 1px solid #2b3246; }
+.saas-project-row:hover strong { color: #bda4ff; }
+.saas-project-row strong, .saas-review-row strong { display: block; color: #dfe5f6; font-size: 13px; font-weight: 550; overflow-wrap: anywhere; }
+.saas-project-row small, .saas-review-row small { display: block; color: #8c9ab7; font-size: 11px; margin-top: 7px; line-height: 1.6; }
+.saas-project-row > span:last-child, .saas-review-row > span:nth-child(2) { color: #a8b2cd; font-size: 11px; white-space: nowrap; }
+.saas-empty { text-align: center; padding: 38px 22px; }
+.saas-empty h2, .saas-empty h3 { color: #e3e9fa; font-size: 17px; font-weight: 500; margin: 0 0 12px; }
+.saas-empty p { font-size: 13px; color: #97a5c2; line-height: 1.8; max-width: 440px; margin: 0 auto 20px; }
+.saas-muted { color: #94a1bd; font-size: 12px; line-height: 1.8; margin: 0; }
+.saas-queue-count { color: #e9eefd; font-size: 36px; margin: 10px 0 15px; font-weight: 500; }
+.saas-queue-count span { color: #94a1bd; font-size: 12px; margin-left: 12px; }
+.saas-process { display: flex; flex-direction: column; gap: 13px; margin-top: 24px; font-size: 12px; color: #b3bfda; }
+.saas-footnote { color: #8290ad; font-size: 11px; line-height: 1.8; margin: 0; }
+.saas-project-tabs { display: flex; flex-wrap: wrap; gap: 8px; padding-bottom: 16px; border-bottom: 1px solid #2e374c; }
+.saas-project-tabs button { background: transparent; border: 1px solid transparent; color: #9ba9c6; padding: 9px 12px; border-radius: 7px; font-size: 12px; }
+.saas-project-tabs button[aria-pressed=true] { color: #d7c7ff; background: #332a49; border-color: #53416e; }
+.saas-project-tabs button:hover { color: #eee; }
+.saas-filters { display: flex; flex-wrap: wrap; gap: 12px; }
+.security-page-title select, .saas-filters select, .saas-filters input, .saas-decision select, .saas-decision textarea { color: #d6def2; border: 1px solid #3b455d; background: #191e2c; border-radius: 8px; padding: 10px 12px; font-size: 12px; min-width: 0; max-width: 100%; }
+.saas-filters input { flex: 1; min-width: 150px; }
+.saas-finding { background: #191e2c; border: 1px solid #333c53; border-radius: 12px; padding: 22px; }
+.saas-finding-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 15px; margin-bottom: 14px; }
+.saas-finding h2 { color: #e1e8fb; font-size: 16px; font-weight: 550; margin: 8px 0 0; }
+.saas-finding a { font-size: 12px; color: #bba5fa; overflow-wrap: anywhere; }
+.saas-finding p, .saas-saved-review > p:not(.saas-footnote) { color: #aab6d1; font-size: 13px; line-height: 1.8; margin: 14px 0; }
+.saas-finding pre { background: #101522; border: 1px solid #2c354b; color: #d1dbf0; font: 12px/1.7 Consolas, monospace; padding: 14px; border-radius: 8px; overflow: auto; max-height: 220px; }
+.saas-severity { font-size: 10px; text-transform: uppercase; border-radius: 6px; padding: 6px 9px; background: #30344a; color: #b9c5e1; }
+.saas-severity.severity-critical, .saas-severity.severity-high { background: #3d2633; color: #f3a8bc; }
+.saas-severity.severity-medium { background: #383128; color: #e7c294; }
+.saas-decision { display: grid; grid-template-columns: 180px 1fr auto; align-items: end; gap: 16px; margin-top: 20px; border-top: 1px solid #303950; padding-top: 18px; }
+.saas-decision label { display: flex; flex-direction: column; gap: 8px; color: #a5b2d0; font-size: 11px; }
+.saas-decision textarea { resize: vertical; min-height: 58px; max-height: 180px; }
+.saas-error { color: #ef9faf; background: #3b2532; padding: 12px 15px; border-radius: 8px; font-size: 12px; line-height: 1.8; }
+.saas-error button { margin-left: 12px; }
+.saas-success { color: #9ed8bd !important; font-size: 12px !important; }
+.saas-report-actions { display: flex; align-items: center; justify-content: space-between; gap: 14px; color: #a8d8c2; font-size: 12px; }
+.saas-saved-review { padding-bottom: 18px; margin-bottom: 20px; border-bottom: 1px solid #2d354a; }
+.saas-saved-review:last-child { margin-bottom: 0; border-bottom: 0; padding-bottom: 0; }
+.saas-comparison { display: flex; gap: 9px; flex-wrap: wrap; margin: 14px 0 8px; }
+.saas-comparison span { padding: 6px 9px; color: #b4c0dc; font-size: 11px; background: #252d40; border-radius: 6px; }
+.tool-projects > .project-workspace, .tool-findings > .findings-inbox { height: auto; min-height: 0; overflow: visible; padding: 0; }
+.project-workspace > .malware-panel { max-height: none; overflow: visible; }
+.project-workspace > div:has(.repo-file-tree) { height: 620px; min-height: 500px; padding: 0; }
+@media (max-width: 1023px) {
+  .security-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .security-columns { grid-template-columns: 1fr; }
+  .saas-decision { grid-template-columns: 1fr; }
+}
+@media (max-width: 767px) {
+  .security-page-title { align-items: flex-start; flex-direction: column; }
+  .security-page-title h1 { font-size: 26px; }
+  .security-metrics { gap: 10px; }
+  .security-metrics > div { padding: 15px; }
+  .security-metrics strong { font-size: 26px; }
+  .saas-panel, .saas-finding { padding: 17px; }
+  .saas-project-row, .saas-review-row { align-items: flex-start; flex-direction: column; gap: 12px; }
+  .saas-filters > select { flex: 1; }
+  .project-workspace > div:has(.repo-file-tree) { height: auto; }
+}

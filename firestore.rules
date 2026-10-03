@@ -1,0 +1,84 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isOwner(uid) {
+      return request.auth != null && request.auth.uid == uid;
+    }
+    match /users/{uid}/analyses/{analysisId} {
+      allow read, delete: if isOwner(uid);
+      allow create: if isOwner(uid)
+        && request.resource.data.keys().hasAll(['id', 'type', 'title', 'timestamp', 'code', 'language', 'codeSnippet', 'data'])
+        && request.resource.data.keys().hasOnly(['id', 'type', 'title', 'timestamp', 'code', 'language', 'codeSnippet', 'data'])
+        && request.resource.data.id == analysisId
+        && request.resource.data.type in ['bugs', 'explain', 'refactor', 'docs']
+        && request.resource.data.title is string
+        && request.resource.data.title.size() <= 200
+        && request.resource.data.timestamp is string
+        && request.resource.data.timestamp.size() <= 40
+        && request.resource.data.code is string
+        && request.resource.data.code.size() <= 20000
+        && request.resource.data.language is string
+        && request.resource.data.language.size() <= 30
+        && request.resource.data.codeSnippet is string
+        && request.resource.data.codeSnippet.size() <= 100
+        && request.resource.data.data is map;
+      allow update: if false;
+    }
+    match /users/{uid}/projects/{projectId} {
+      function validProject() {
+        let data = request.resource.data;
+        return data.keys().hasOnly(['id', 'owner', 'repo', 'fullName', 'createdAt', 'updatedAt', 'fileCount', 'files'])
+          && data.id == projectId && data.owner is string && data.owner.size() <= 100
+          && data.repo is string && data.repo.size() <= 100
+          && data.fullName == data.owner + '/' + data.repo
+          && data.createdAt is string && data.createdAt.size() <= 40
+          && data.updatedAt is string && data.updatedAt.size() <= 40
+          && data.fileCount is int && data.fileCount >= 0
+          && data.files is list && data.files.size() <= 1000;
+      }
+      allow read: if isOwner(uid);
+      allow create: if isOwner(uid) && validProject();
+      allow update: if isOwner(uid) && validProject()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['updatedAt', 'fileCount', 'files']);
+      allow delete: if false;
+    }
+    match /users/{uid}/reviews/{reviewId} {
+      allow read: if isOwner(uid);
+      allow create: if isOwner(uid)
+        && request.resource.data.keys().hasOnly(['id', 'projectId', 'createdAt', 'report', 'findingIds'])
+        && request.resource.data.id == reviewId
+        && request.resource.data.createdAt is string && request.resource.data.createdAt.size() <= 40
+        && request.resource.data.projectId is string
+        && exists(/databases/$(database)/documents/users/$(uid)/projects/$(request.resource.data.projectId))
+        && request.resource.data.report is map
+        && request.resource.data.report.provider == 'gemini'
+        && request.resource.data.report.repository == get(/databases/$(database)/documents/users/$(uid)/projects/$(request.resource.data.projectId)).data.fullName
+        && request.resource.data.report.revision is string
+        && request.resource.data.report.revision.matches('^[a-fA-F0-9]{40}$')
+        && request.resource.data.report.findings is list && request.resource.data.report.findings.size() <= 100
+        && request.resource.data.findingIds is list
+        && request.resource.data.findingIds.size() == request.resource.data.report.findings.size();
+      allow update, delete: if false;
+    }
+    match /users/{uid}/decisions/{decisionId} {
+      function validDecision() {
+        let data = request.resource.data;
+        return data.keys().hasOnly(['id', 'reviewId', 'findingId', 'status', 'note', 'updatedAt'])
+          && data.id == decisionId && data.reviewId is string && data.findingId is string
+          && decisionId == data.reviewId + '_' + data.findingId
+          && exists(/databases/$(database)/documents/users/$(uid)/reviews/$(data.reviewId))
+          && data.findingId in get(/databases/$(database)/documents/users/$(uid)/reviews/$(data.reviewId)).data.findingIds
+          && data.status in ['open', 'in_progress', 'resolved', 'accepted_risk']
+          && data.note is string && data.note.size() <= 2000
+          && (!(data.status in ['resolved', 'accepted_risk']) || data.note.matches('(?s).*\\S.*'))
+          && data.updatedAt is string && data.updatedAt.size() <= 40;
+      }
+      allow read: if isOwner(uid);
+      allow create, update: if isOwner(uid) && validDecision();
+      allow delete: if false;
+    }
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

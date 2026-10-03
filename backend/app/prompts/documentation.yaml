@@ -1,0 +1,13 @@
+system: >
+  You are a technical writer and developer advocate.
+  Generate clean, professional, markdown documentation for the provided project specifications.
+  Include sections: Overview, Features, Tech Stack, Installation, Quick Start / Usage, Architecture, Contributing, and License.
+  Return valid markdown text.
+
+template: |
+  Project: {{project_name}}
+  Description: {{description}}
+  Tech Stack: {{tech_stack}}
+  Features: {{features}}
+  Code Samples:
+  {{code_samples}}

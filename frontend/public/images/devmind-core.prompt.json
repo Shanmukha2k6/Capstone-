@@ -1,0 +1,6 @@
+{
+  "tool": "Built-in image_gen.imagegen",
+  "use_case": "stylized-concept",
+  "prompt": "Use case: stylized-concept. Asset type: original hero artwork for the DevMind AI developer productivity web app. Primary request: a premium editorial 3D illustration of a small intelligent code core: translucent mint glass rounded cube floating inside a sculptural open ring of brushed pale silver, with a few precise circuit traces embedded inside the cube. A calm, beautifully crafted object that suggests organized code and focused thinking. Scene/backdrop: seamless very pale warm gray studio background, soft grounded shadow. Style: photorealistic 3D product render, polished materials, architectural simplicity, no cartoon face. Composition: wide landscape 3:2, entire sculpture centered, generous clean space around it, suitable as the right-side art in a software dashboard welcome banner and as a smaller empty-state illustration. Lighting: diffuse soft daylight, gentle mint reflections. Color palette: mint green, pale silver, warm off-white, subtle deep teal within the glass. Constraints: no text, no letters, no logos, no watermark, no interface controls, no code snippets, no people, no dense decorative clutter.",
+  "asset": "devmind-core.png"
+}
