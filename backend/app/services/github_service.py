@@ -4,6 +4,7 @@ from typing import Any, Dict, List, Optional
 from urllib.parse import quote
 
 import httpx
+from app.core.config import settings
 
 IGNORED_PATTERNS = {
     "node_modules", ".git", "venv", ".venv", "__pycache__", "dist", "build",
@@ -27,8 +28,9 @@ class GitHubService:
 
     def _headers(self, token: Optional[str] = None) -> Dict[str, str]:
         headers = {"Accept": "application/vnd.github+json", "User-Agent": "DevMind-AI"}
-        if token:
-            headers["Authorization"] = f"Bearer {token}"
+        auth_token = token or settings.GITHUB_TOKEN
+        if auth_token:
+            headers["Authorization"] = f"Bearer {auth_token}"
         return headers
 
     async def _request(self, path: str, token: Optional[str] = None,
