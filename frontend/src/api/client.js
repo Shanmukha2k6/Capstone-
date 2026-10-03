@@ -3,10 +3,10 @@ const GITHUB_API = "https://api.github.com";
 const LOCAL_GEMINI_KEY = "devmind_gemini_key";
 
 const FALLBACK_MODELS = [
+  "gemini-3.8-flash",
+  "gemini-3.8",
   "gemini-2.5-flash",
   "gemini-2.0-flash",
-  "gemini-2.5-pro",
-  "gemini-2.0-flash-exp",
   "gemini-flash"
 ];
 
@@ -36,7 +36,8 @@ async function resolveActiveGeminiModel(apiKey) {
   if (!apiKey) return cachedGeminiModel || FALLBACK_MODELS[0];
   if (cachedGeminiModel) return cachedGeminiModel;
   const models = await getAvailableGeminiModels(apiKey);
-  const chosen = models.find((m) => m.includes("2.5-flash"))
+  const chosen = models.find((m) => m.includes("3.8-flash") || m.includes("3.8"))
+    || models.find((m) => m.includes("2.5-flash"))
     || models.find((m) => m.includes("2.0-flash"))
     || models.find((m) => m.toLowerCase().includes("flash"))
     || models[0]
@@ -423,7 +424,7 @@ ${manifest}
   }
 
   const verdict = verified.length > 0 ? "suspicious" : (rejected > 0 ? "inconclusive" : "no_indicators_in_scanned_files");
-  const activeModel = cachedGeminiModel || "gemini-2.5-flash";
+  const activeModel = cachedGeminiModel || "gemini-3.8-flash";
 
   return {
     repository: `${owner}/${repo}`,
