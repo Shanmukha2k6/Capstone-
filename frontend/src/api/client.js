@@ -2,6 +2,30 @@ const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
 const GITHUB_API = "https://api.github.com";
 const LOCAL_GEMINI_KEY = "devmind_gemini_key";
 
+let cachedGeminiModel = "gemini-2.5-flash";
+
+async function resolveActiveGeminiModel(apiKey) {
+  if (!apiKey) return cachedGeminiModel;
+  try {
+    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
+    if (res.ok) {
+      const data = await res.json();
+      const valid = (data.models || [])
+        .filter((m) => (m.supportedGenerationMethods || []).includes("generateContent"))
+        .map((m) => m.name.replace(/^models\//, ""));
+      const preferred = valid.find((name) => name.includes("2.5-flash"))
+        || valid.find((name) => name.includes("2.0-flash"))
+        || valid.find((name) => name.includes("flash"))
+        || valid[0];
+      if (preferred) {
+        cachedGeminiModel = preferred;
+        return preferred;
+      }
+    }
+  } catch {}
+  return cachedGeminiModel;
+}
+
 const IGNORED_PATTERNS = [
   "node_modules", ".git", "venv", ".venv", "__pycache__", "dist", "build",
   "package-lock.json", "yarn.lock", "pnpm-lock.yaml", "poetry.lock", ".DS_Store"
@@ -129,11 +153,12 @@ async function geminiSettingsRequest(method = "GET", apiKey) {
         throw new Error("Enter a valid Gemini API key (at least 20 characters).");
       }
       setStoredKey(trimmed);
+      const model = await resolveActiveGeminiModel(trimmed);
       return {
         configured: true,
         session_key: true,
         source: "session",
-        model: "gemini-1.5-flash",
+        model: model,
         expires_in_seconds: 28800
       };
     } else if (method === "DELETE") {
@@ -142,16 +167,17 @@ async function geminiSettingsRequest(method = "GET", apiKey) {
         configured: false,
         session_key: false,
         source: "none",
-        model: "gemini-1.5-flash",
+        model: cachedGeminiModel,
         expires_in_seconds: null
       };
     } else {
       const localKey = getStoredKey();
+      const model = await resolveActiveGeminiModel(localKey);
       return {
         configured: Boolean(localKey),
         session_key: Boolean(localKey),
         source: localKey ? "session" : "none",
-        model: "gemini-1.5-flash",
+        model: model,
         expires_in_seconds: localKey ? 28800 : null
       };
     }
@@ -159,7 +185,8 @@ async function geminiSettingsRequest(method = "GET", apiKey) {
 }
 
 async function streamDirectGemini(apiKey, repoName, messages, context, onToken, onDone) {
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:streamGenerateContent?alt=sse&key=${apiKey}`;
+  const model = await resolveActiveGeminiModel(apiKey);
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:streamGenerateContent?alt=sse&key=${apiKey}`;
   const systemPrompt = `You are DevMind AI, an expert software engineering assistant. You help developers understand, inspect, refactor, and secure their code. Context: ${repoName || "Project"}.${context ? `\n\n${context}` : ""}`;
 
   const contents = (messages || []).map((m) => ({
@@ -211,7 +238,8 @@ async function streamDirectGemini(apiKey, repoName, messages, context, onToken, 
 }
 
 async function directGeminiJson(apiKey, prompt, systemPrompt) {
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+  const model = await resolveActiveGeminiModel(apiKey);
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
   const res = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -234,6 +262,7 @@ async function directGeminiJson(apiKey, prompt, systemPrompt) {
 }
 
 async function directGeminiMalwareScan(owner, repo, maxFiles, token, apiKey) {
+  const model = await resolveActiveGeminiModel(apiKey);
   const repoInfo = await directGitHubRequest(`/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}`, token);
   const defaultBranch = repoInfo.default_branch || "main";
   const commit = await directGitHubRequest(`/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/commits/${encodeURIComponent(defaultBranch)}`, token);
@@ -346,7 +375,7 @@ ${manifest}
     repository: `${owner}/${repo}`,
     revision,
     branch: defaultBranch,
-    model: "gemini-1.5-flash",
+    model: model,
     verdict,
     summary: analysis.summary || (verdict === "no_indicators_in_scanned_files" ? "No malware indicators detected in the scanned source files." : "Security review complete."),
     findings: verified,
@@ -402,9 +431,10 @@ export const api = {
       if (!isNetworkError(err)) throw err;
     }
     const localKey = getStoredKey();
+    const model = await resolveActiveGeminiModel(localKey);
     return {
       provider: localKey ? "gemini" : "mock",
-      model: localKey ? "gemini-1.5-flash" : "demo",
+      model: localKey ? model : "demo",
       gemini_configured: Boolean(localKey)
     };
   },
@@ -548,12 +578,13 @@ export const api = {
     } catch (err) {
       if (!isNetworkError(err)) throw err;
       const key = getStoredKey();
+      const model = await resolveActiveGeminiModel(key);
       return {
         provider: "gemini",
         configured: Boolean(key),
         session_key: Boolean(key),
         source: key ? "session" : "none",
-        model: "gemini-1.5-flash",
+        model: model,
         expires_in_seconds: key ? 28800 : null,
         enabled: true,
         max_files_limit: 12,
