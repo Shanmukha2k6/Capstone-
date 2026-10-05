@@ -25,7 +25,8 @@
 .saas-project-row strong, .saas-review-row strong { display: block; color: #dfe5f6; font-size: 13px; font-weight: 550; overflow-wrap: anywhere; }
 .saas-project-row small, .saas-review-row small { display: block; color: #8c9ab7; font-size: 11px; margin-top: 7px; line-height: 1.6; }
 .saas-project-row > span:last-child, .saas-review-row > span:nth-child(2) { color: #a8b2cd; font-size: 11px; white-space: nowrap; }
-.saas-empty { text-align: center; padding: 38px 22px; }
+.saas-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 38px 22px; }
+.saas-empty-icon { display: grid; place-items: center; width: 52px; height: 52px; border-radius: 15px; background: #2e2449; color: #c4abff; margin-bottom: 16px; }
 .saas-empty h2, .saas-empty h3 { color: #e3e9fa; font-size: 17px; font-weight: 500; margin: 0 0 12px; }
 .saas-empty p { font-size: 13px; color: #97a5c2; line-height: 1.8; max-width: 440px; margin: 0 auto 20px; }
 .saas-muted { color: #94a1bd; font-size: 12px; line-height: 1.8; margin: 0; }
@@ -79,3 +80,12 @@
   .saas-filters > select { flex: 1; }
   .project-workspace > div:has(.repo-file-tree) { height: auto; }
 }
+.repo-search { position: relative; flex: 1; min-width: 0; }
+.repo-search svg { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: #7e82a0; pointer-events: none; }
+.repo-search input { width: 100%; height: 42px; padding: 0 14px 0 40px; border: 1px solid #303449; border-radius: 11px; background: #141722; color: #edeefa; font-size: 13.5px; transition: border-color .15s, box-shadow .15s; }
+.repo-search input::placeholder { color: #6e7290; }
+.repo-search input:hover { border-color: #454963; }
+.repo-search input:focus, .repo-search input:focus-visible { outline: none; border-color: #7346e8; box-shadow: 0 0 0 3px rgba(115,70,232,.2); }
+.repo-search input:read-only { color: #b7b8cf; }
+.repo-search-button { height: 42px; padding: 0 18px; border: 0; border-radius: 11px; background: #7346e8; color: #fff; font-size: 13px; font-weight: 650; flex-shrink: 0; transition: background .15s; }
+.repo-search-button:hover:not(:disabled) { background: #5e30d3; }

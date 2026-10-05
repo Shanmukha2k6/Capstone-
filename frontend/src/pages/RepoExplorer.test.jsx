@@ -25,6 +25,11 @@ beforeEach(() => {
 afterEach(() => act(() => renderer.unmount()));
 
 describe("repository source selection", () => {
+  it("starts with an empty search box and a disabled load button", () => {
+    expect(input().props.value).toBe("");
+    expect(input().props.spellCheck).toBe(false);
+    expect(button("Load Repo").props.disabled).toBe(true);
+  });
   it("uses the loaded repository when the search input is edited, and forwards the real source", async () => {
     change("https://github.com/demo/project"); await load();
     change("another/repository");
@@ -44,7 +49,7 @@ describe("repository source selection", () => {
   });
   it("disables analysis during a file load and after failures", async () => {
     const file = deferred(); mock.getRepoFile.mockReturnValue(file.promise);
-    await load();
+    change("demo/project"); await load();
     await act(async () => { button("src/main.py").props.onClick(); });
     expect(button("Analyze in Workspace").props.disabled).toBe(true);
     await act(async () => file.resolve({ content: "print(1)" }));
@@ -58,7 +63,7 @@ describe("repository source selection", () => {
   });
   it("ignores a delayed file response after switching repositories", async () => {
     const oldFile = deferred(); mock.getRepoFile.mockReturnValue(oldFile.promise);
-    await load(); await act(async () => { button("src/main.py").props.onClick(); });
+    change("first/project"); await load(); await act(async () => { button("src/main.py").props.onClick(); });
     change("second/project"); await load();
     mock.getRepoFile.mockResolvedValue({ content: "print('second repository')" });
     await act(async () => button("src/main.py").props.onClick());

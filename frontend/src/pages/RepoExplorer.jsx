@@ -9,7 +9,7 @@ const LANGUAGES = { py: "python", js: "javascript", mjs: "javascript", cjs: "jav
 
 export default function RepoExplorer({ onOpenInWorkspace, onOpenSettings, project, onConnectedRepository, onSourceLoaded, onReport }) {
   const { githubToken, saveGithubToken } = useAuth();
-  const [repoInput, setRepoInput] = useState(project?.fullName || "fastapi/fastapi");
+  const [repoInput, setRepoInput] = useState(project?.fullName || "");
   const [tokenInput, setTokenInput] = useState(githubToken || "");
   const [showTokenInput, setShowTokenInput] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -66,10 +66,10 @@ export default function RepoExplorer({ onOpenInWorkspace, onOpenSettings, projec
   return <div className="h-[calc(100vh-3.5rem)] flex flex-col p-4 sm:p-6 space-y-3 overflow-hidden">
     <form onSubmit={(event) => { event.preventDefault(); handleFetchRepo(); }} className="flex flex-wrap items-center justify-between gap-3 shrink-0">
       <div className="flex items-center gap-2 flex-1 min-w-0 max-w-2xl">
-        <div className="relative flex-1 min-w-0"><Search className="w-4 h-4 text-gpt-muted absolute left-3 top-2.5" />
-          <input aria-label="GitHub repository or topic" readOnly={Boolean(project)} value={repoInput} onChange={(event) => setRepoInput(event.target.value)} placeholder="GitHub URL, topic URL, or owner/repo"
-            className="w-full bg-gpt-surface border border-gpt-border rounded-xl pl-9 pr-3 py-2 text-xs text-gpt-text placeholder-gpt-muted" /></div>
-        <button disabled={loading} className="px-3.5 py-2 rounded-xl bg-violet-600 hover:bg-violet-700 text-white text-xs font-semibold shrink-0 disabled:opacity-40">{loading ? "Loading..." : project ? "Refresh inventory" : "Load Repo"}</button>
+        <div className="repo-search"><Search size={16} aria-hidden="true" />
+          <input aria-label="GitHub repository or topic" readOnly={Boolean(project)} value={repoInput} onChange={(event) => setRepoInput(event.target.value)}
+            placeholder="Paste a GitHub URL or owner/repo — e.g. https://github.com/owner/repo" spellCheck={false} autoComplete="off" autoCapitalize="off" /></div>
+        <button disabled={loading || !repoInput.trim()} className="repo-search-button">{loading ? "Loading..." : project ? "Refresh inventory" : "Load Repo"}</button>
       </div>
       <button type="button" onClick={() => setShowTokenInput(!showTokenInput)} className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-gpt-surface hover:bg-gpt-surfaceHover text-gpt-muted text-xs border border-gpt-border"><Key size={14} />{githubToken ? "Token Configured" : "GitHub Token"}</button>
     </form>
