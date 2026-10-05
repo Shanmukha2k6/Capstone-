@@ -1,5 +1,5 @@
 import React from "react";
-import { LayoutDashboard, Code2, FolderGit2, ShieldCheck, MessageSquare, History, Command, Settings, Plus } from "lucide-react";
+import { LayoutDashboard, Code2, FolderGit2, ShieldCheck, MessageSquare, History, Command, Settings, Plus, Sparkles } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 
 export default function Sidebar({ sidebarOpen, setSidebarOpen, activeTab, setActiveTab, history = [], onSelectHistory, projects = [], activeProject, onSelectProject }) {
@@ -34,6 +34,8 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen, activeTab, setAct
           : <p className="sidebar-empty">Connect a repository to start a review.</p>}
       </div>
       <div className="sidebar-bottom">
+        <div className="plan-card"><div className="plan-card-head"><Sparkles size={15} /><strong>Free beta</strong></div>
+          <p>All current features are free while DevMind is in beta.</p></div>
         <div className="sidebar-profile"><span className="workspace-avatar">{user?.displayName?.[0] || user?.email?.[0] || "D"}</span>
           <div><strong>{user?.displayName || user?.email?.split("@")[0] || "Local developer"}</strong><span>{user && !user.isGuest ? "Account workspace" : "Local workspace"}</span></div>
           <span className="status-dot" /></div>

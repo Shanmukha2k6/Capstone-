@@ -1,0 +1,116 @@
+/* Marketing site (landing page). Shares the app's dark palette. */
+html:has(.lp-root) { scroll-behavior: smooth; scroll-padding-top: 80px; }
+.lp-root { min-height: 100dvh; background: #0e101a; color: #edeefa; overflow-x: hidden; }
+.lp-container { width: 100%; max-width: 1180px; margin: 0 auto; padding: 0 24px; }
+.lp-brand { display: inline-flex; align-items: center; gap: 10px; color: #edeefa; font-size: 21px; font-weight: 750; letter-spacing: -.8px; }
+.lp-brand .brand-mark { width: 32px; height: 32px; }
+.lp-link-button { border: 0; background: transparent; color: #b7b8cf; font-size: 13px; font-weight: 550; padding: 8px 10px; border-radius: 8px; }
+.lp-link-button:hover { color: #edeefa; background: #191c2a; }
+
+/* Nav */
+.lp-nav { position: sticky; top: 0; z-index: 30; background: rgba(14,16,26,.78); backdrop-filter: blur(14px); border-bottom: 1px solid #262a3c; }
+.lp-nav-inner { height: 66px; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.lp-nav-inner > a { text-decoration: none; }
+.lp-nav-links { display: flex; gap: 4px; }
+.lp-nav-links a { color: #b7b8cf; text-decoration: none; font-size: 13.5px; font-weight: 500; padding: 8px 12px; border-radius: 8px; }
+.lp-nav-links a:hover { color: #edeefa; background: #191c2a; }
+.lp-nav-actions { display: flex; align-items: center; gap: 8px; }
+.lp-nav-actions .lp-menu, .lp-nav-signin { display: none; }
+
+/* Hero */
+.lp-hero { position: relative; padding: 88px 0 96px; overflow: hidden; }
+.lp-glow { position: absolute; inset: -20% -10% auto; height: 640px; background: radial-gradient(closest-side at 30% 40%, rgba(115,70,232,.35), transparent), radial-gradient(closest-side at 75% 30%, rgba(242,123,181,.16), transparent); pointer-events: none; }
+.lp-hero-grid { position: relative; display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); gap: 56px; align-items: center; }
+.lp-pill { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; border-radius: 999px; font-size: 12px; font-weight: 600; color: #c4abff; background: rgba(173,139,255,.1); border: 1px solid rgba(173,139,255,.25); }
+.lp-hero h1 { font-size: clamp(38px, 5.2vw, 62px); line-height: 1.04; letter-spacing: -.045em; font-weight: 780; margin: 22px 0 20px; }
+.lp-gradient-text { background: linear-gradient(90deg, #c4abff, #f27bb5 60%, #f6c976); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.lp-hero-copy > p { font-size: 17px; line-height: 1.65; color: #b7b8cf; max-width: 540px; margin: 0 0 30px; }
+.lp-hero-actions { display: flex; gap: 12px; flex-wrap: wrap; }
+.lp-cta { padding: 14px 22px; font-size: 14.5px; border-radius: 11px; box-shadow: 0 12px 30px -10px rgba(115,70,232,.75); }
+.lp-ghost-button { display: inline-flex; align-items: center; padding: 14px 20px; border-radius: 11px; border: 1px solid #303449; color: #edeefa; font-size: 14.5px; font-weight: 600; text-decoration: none; }
+.lp-ghost-button:hover { background: #191c2a; border-color: #454963; }
+.lp-hero-points { display: flex; flex-wrap: wrap; gap: 8px 20px; list-style: none; padding: 0; margin: 26px 0 0; font-size: 12.5px; color: #9599b4; }
+.lp-hero-points li::before { content: "✓"; color: #82dbc4; margin-right: 7px; font-weight: 700; }
+
+/* Product preview */
+.lp-preview { background: #141722; border: 1px solid #303449; border-radius: 18px; box-shadow: 0 40px 90px -30px rgba(0,0,0,.8), 0 0 0 1px rgba(255,255,255,.02) inset, 0 0 80px -30px rgba(115,70,232,.6); overflow: hidden; transform: perspective(1400px) rotateY(-5deg) rotateX(2deg); }
+.lp-preview-bar { height: 38px; display: flex; align-items: center; gap: 14px; padding: 0 14px; border-bottom: 1px solid #262a3c; font-size: 11px; color: #9599b4; font-family: "Fira Code", Consolas, monospace; }
+.lp-preview-tag { margin-left: auto; font-family: inherit; font-size: 10px; padding: 2px 7px; border-radius: 5px; background: #2e2449; color: #c4abff; }
+.lp-preview-body { padding: 18px; display: flex; flex-direction: column; gap: 10px; }
+.lp-preview-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 4px; }
+.lp-preview-head strong { display: block; font-size: 14px; }
+.lp-preview-head span, .lp-preview-row span:not(.lp-sev) { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; color: #9599b4; margin-top: 3px; }
+.lp-coverage { font-size: 11px !important; padding: 4px 9px; border-radius: 6px; background: #183830; color: #82dbc4 !important; margin: 0 !important; white-space: nowrap; }
+.lp-preview-row { display: flex; gap: 12px; align-items: flex-start; padding: 12px; border-radius: 11px; background: #191c2a; border: 1px solid #262a3c; }
+.lp-preview-row strong { display: block; font-size: 12.5px; font-weight: 600; line-height: 1.4; }
+.lp-preview-row span:not(.lp-sev) { font-family: "Fira Code", Consolas, monospace; }
+.lp-sev { flex-shrink: 0; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; padding: 3px 7px; border-radius: 5px; }
+.lp-sev-high { background: #3b2333; color: #f49fb4; }
+.lp-sev-medium { background: #3a2f1c; color: #f6c976; }
+.lp-sev-low { background: #1f2c48; color: #93b7ff; }
+.lp-preview-note { display: flex; align-items: center; gap: 8px; font-size: 11.5px; color: #c4abff; padding: 10px 12px; border-radius: 10px; border: 1px dashed rgba(173,139,255,.35); }
+
+/* Sections */
+.lp-section { padding: 96px 0; }
+.lp-section-alt { background: #121521; border-top: 1px solid #1f2232; border-bottom: 1px solid #1f2232; }
+.lp-section-head { text-align: center; max-width: 640px; margin: 0 auto 48px; }
+.lp-section-head.lp-left { text-align: left; margin: 0; }
+.lp-eyebrow { display: block; font-size: 12px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: #ad8bff; margin-bottom: 12px; }
+.lp-section-head h2 { font-size: clamp(28px, 3.4vw, 40px); line-height: 1.12; letter-spacing: -.035em; font-weight: 750; margin: 0; }
+.lp-section-head p { color: #b7b8cf; font-size: 16px; line-height: 1.6; margin: 14px 0 0; }
+.lp-icon { width: 42px; height: 42px; display: grid; place-items: center; border-radius: 12px; flex-shrink: 0; }
+.lp-tone-purple { background: #2e2449; color: #c4abff; }
+.lp-tone-mint { background: #183830; color: #82dbc4; }
+.lp-tone-blue { background: #1f2c48; color: #93b7ff; }
+.lp-tone-coral { background: #3b2333; color: #f49fb4; }
+.lp-feature-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
+.lp-card { padding: 26px; border-radius: 16px; background: #191c2a; border: 1px solid #262a3c; transition: border-color .2s, transform .2s; }
+.lp-card:hover { border-color: #454963; transform: translateY(-3px); }
+.lp-card h3, .lp-steps h3, .lp-trust-item h3 { font-size: 16.5px; font-weight: 700; letter-spacing: -.02em; margin: 18px 0 8px; }
+.lp-card p, .lp-steps p, .lp-trust-item p { font-size: 13.5px; line-height: 1.65; color: #9fa3bf; margin: 0; }
+.lp-steps { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 18px; counter-reset: step; }
+.lp-steps li { position: relative; padding: 26px; border-radius: 16px; background: #0e101a; border: 1px solid #262a3c; }
+.lp-step-num { position: absolute; top: 22px; right: 22px; font-size: 13px; font-weight: 700; color: #454963; font-family: "Fira Code", Consolas, monospace; }
+.lp-trust { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); gap: 56px; align-items: center; }
+.lp-trust-list { display: flex; flex-direction: column; gap: 14px; }
+.lp-trust-item { display: flex; gap: 16px; padding: 20px; border-radius: 14px; background: #191c2a; border: 1px solid #262a3c; }
+.lp-trust-item h3 { margin-top: 2px; }
+
+/* FAQ */
+.lp-faq { max-width: 760px; }
+.lp-faq details { border-bottom: 1px solid #262a3c; }
+.lp-faq summary { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 22px 4px; font-size: 16px; font-weight: 600; cursor: pointer; list-style: none; }
+.lp-faq summary::-webkit-details-marker { display: none; }
+.lp-faq summary svg { color: #9599b4; transition: transform .2s; flex-shrink: 0; }
+.lp-faq details[open] summary svg { transform: rotate(180deg); }
+.lp-faq details p { margin: 0; padding: 0 4px 22px; font-size: 14.5px; line-height: 1.7; color: #b7b8cf; }
+
+/* Footer */
+.lp-footer { border-top: 1px solid #262a3c; padding: 40px 0 28px; }
+.lp-footer-inner { display: flex; justify-content: space-between; align-items: flex-start; gap: 24px; flex-wrap: wrap; }
+.lp-footer-inner p { color: #9599b4; font-size: 13px; margin: 12px 0 0; }
+.lp-footer nav { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.lp-footer nav a { color: #b7b8cf; text-decoration: none; font-size: 13px; padding: 8px 10px; }
+.lp-footer nav a:hover { color: #edeefa; }
+.lp-footer-legal { margin-top: 28px; padding-top: 20px; border-top: 1px solid #1f2232; font-size: 12px; color: #7e82a0; }
+
+@media (max-width: 1023px) {
+  .lp-hero { padding: 64px 0 72px; }
+  .lp-hero-grid, .lp-trust { grid-template-columns: 1fr; gap: 44px; }
+  .lp-preview { transform: none; }
+  .lp-feature-grid, .lp-steps { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 767px) {
+  .lp-container { padding: 0 16px; }
+  .lp-nav-actions .lp-menu { display: inline-flex; }
+  .lp-nav-actions .lp-link-button { display: none; }
+  .lp-nav-links { display: none; position: absolute; top: 66px; left: 0; right: 0; flex-direction: column; padding: 12px 16px 18px; background: #0e101a; border-bottom: 1px solid #262a3c; }
+  .lp-nav-links.open { display: flex; }
+  .lp-nav-links a, .lp-nav-links .lp-nav-signin { padding: 12px; font-size: 15px; text-align: left; }
+  .lp-nav-links .lp-nav-signin { display: block; color: #c4abff; }
+  .lp-section { padding: 72px 0; }
+  .lp-hero-copy > p { font-size: 15.5px; }
+  .lp-feature-grid, .lp-steps { grid-template-columns: 1fr; }
+  .lp-preview-head { flex-direction: column; align-items: flex-start; }
+}
+@media (max-width: 420px) { .lp-nav-actions .button-dark { padding: 9px 10px; } }
