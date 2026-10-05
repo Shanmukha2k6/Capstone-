@@ -1,5 +1,5 @@
 import React from "react";
-import { LayoutDashboard, Code2, FolderGit2, ShieldCheck, MessageSquare, History, Command, Settings, Plus } from "lucide-react";
+import { LayoutDashboard, Code2, FolderGit2, ShieldCheck, MessageSquare, History, Command, Settings, Plus, LogOut } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 
 const NAVIGATION = [
@@ -10,7 +10,7 @@ const NAVIGATION = [
 ];
 
 export default function Sidebar({ sidebarOpen, setSidebarOpen, activeTab, setActiveTab, history = [] }) {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   if (!sidebarOpen) return null;
   const select = (id) => { setActiveTab(id); if (window.innerWidth < 768) setSidebarOpen(false); };
   const name = user?.displayName || user?.email?.split("@")[0] || "Account";
@@ -30,6 +30,7 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen, activeTab, setAct
       <div className="sidebar-profile">
         <span className="workspace-avatar">{user?.photoURL ? <img src={user.photoURL} alt="" referrerPolicy="no-referrer" /> : name[0]}</span>
         <div><strong>{name}</strong>{user?.email && <span>{user.email}</span>}</div>
+        <button className="icon-button" onClick={logout} aria-label="Sign out" title="Sign out"><LogOut size={16} /></button>
       </div>
     </aside>
   </>;

@@ -22,9 +22,9 @@ function Router() {
   if (route === "login") return <SignInPage onBack={goHome} onSignedIn={goApp} />;
   if (route === "home") return <LandingPage onOpenApp={user ? goApp : goLogin} onSignIn={goLogin} />;
   if (!user) return <div className="auth-loading" role="status">Checking your session…</div>;
-  return <AppShell key={user?.uid || "signed-out"} onGoHome={goHome} onSignIn={goLogin} />;
+  return <AppShell key={user?.uid || "signed-out"} onGoHome={goHome} />;
 }
-function AppShell({ onGoHome, onSignIn }) {
+function AppShell({ onGoHome }) {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(() => window.innerWidth >= 768);
   const historyState = useAnalysisHistory(), security = useSecurityWorkspace();
@@ -40,7 +40,7 @@ function AppShell({ onGoHome, onSignIn }) {
     <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} activeTab={activeTab} setActiveTab={setActiveTab}
       history={historyState.history} />
     <div className="app-main-column">
-      <Navbar onOpenAuth={onSignIn} onGoHome={onGoHome} sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} activeTab={activeTab} />
+      <Navbar onGoHome={onGoHome} sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} activeTab={activeTab} />
       <WorkspaceContent activeTab={activeTab} security={security} historyState={historyState} workspacePreload={workspacePreload}
         openWorkspace={openWorkspace} openSaved={openSaved} setActiveTab={setActiveTab} openProject={openProject} connectRepository={connectRepository} />
     </div>
