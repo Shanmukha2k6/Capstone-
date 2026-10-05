@@ -1,4 +1,5 @@
-const GITHUB_API = "https://api.github.com";
+// Mirrors client.js: REST calls use the Vercel proxy (/api/gh) in production for a shared token.
+const GITHUB_API = import.meta.env.VITE_GITHUB_PROXY || (import.meta.env.PROD ? "/api/gh" : "https://api.github.com");
 const GITHUB_URL = /(?:https?:\/\/)?(?:www\.)?github\.com\/([A-Za-z0-9-]{1,39})\/([A-Za-z0-9._-]{1,100})/gi;
 const FULL_NAME = /^([A-Za-z0-9-]{1,39})\/([A-Za-z0-9._-]{1,100})$/;
 const IGNORED = new Set(["node_modules", ".git", "venv", ".venv", "__pycache__", "dist", "build"]);

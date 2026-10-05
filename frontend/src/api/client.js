@@ -1,7 +1,9 @@
 import { buildRepoContext, repoSnapshot } from "./repoContext";
 
 const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
-const GITHUB_API = "https://api.github.com";
+// In production, GitHub REST calls go through the Vercel proxy (/api/gh), which adds a
+// shared server-side token so every visitor gets GitHub's authenticated rate limit.
+export const GITHUB_API = import.meta.env.VITE_GITHUB_PROXY || (import.meta.env.PROD ? "/api/gh" : "https://api.github.com");
 const LOCAL_GEMINI_KEY = "devmind_gemini_key";
 
 const FALLBACK_MODELS = [
