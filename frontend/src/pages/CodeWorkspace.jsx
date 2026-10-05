@@ -18,6 +18,9 @@ import FindingCard from "../components/FindingCard";
 import DiffViewer from "../components/DiffViewer";
 import { api } from "../api/client";
 
+const DOC_STYLES = { java: "javadoc", kotlin: "javadoc", javascript: "jsdoc", typescript: "jsdoc" };
+export const docStyleFor = (language) => DOC_STYLES[(language || "").toLowerCase()] || "google";
+
 export default function CodeWorkspace({ onSaveAnalysis, preloadData }) {
   const [code, setCode] = useState(SAMPLE_CODES.python);
   const [language, setLanguage] = useState("python");
@@ -91,11 +94,11 @@ export default function CodeWorkspace({ onSaveAnalysis, preloadData }) {
           code, language, codeSnippet: code.slice(0, 100)
         });
       } else if (activeTab === "docs") {
-        const res = await api.generateDocstrings(code, language, "google");
+        const res = await api.generateDocstrings(code, language, docStyleFor(language));
         setDocData(res);
         onSaveAnalysis && await onSaveAnalysis({
           type: "docs",
-          title: `Docstrings (${language})`,
+          title: `${docStyleFor(language) === "javadoc" ? "JavaDocs" : "Docstrings"} (${language})`,
           timestamp: new Date().toISOString(),
           data: res,
           code, language, codeSnippet: code.slice(0, 100)
