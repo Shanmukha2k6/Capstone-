@@ -4,6 +4,10 @@
   "outputDirectory": "frontend/dist",
   "rewrites": [
     {
+      "source": "/api/gh/(.*)",
+      "destination": "/api/gh?path=$1"
+    },
+    {
       "source": "/((?!api/).*)",
       "destination": "/index.html"
     }
