@@ -10,6 +10,7 @@ it("selects relevant opened source with real line numbers and bounded context", 
 });
 
 it("does not invent source when no project files have been opened", () => {
-  expect(JSON.parse(projectContext({ fullName: "demo/repo" }, {}, "Find authentication")).chunks).toEqual([]);
+  expect(projectContext({ fullName: "demo/repo" }, {}, "Find authentication")).toBe("");
+  expect(JSON.parse(projectContext({ fullName: "demo/repo" }, {}, "Find authentication", "note")).chunks).toEqual([]);
   expect(projectContext(null, {}, "Question", "Manual only")).toBe("Manual only");
 });

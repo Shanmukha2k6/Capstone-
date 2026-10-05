@@ -16,7 +16,7 @@ function sourceChunks(files, question) {
 }
 
 export function projectContext(project, files, question, manual = "") {
-  if (!project) return manual;
+  if (!project || (!Object.keys(files || {}).length && !manual.trim())) return manual;
   const chunks = [], base = { repository: project.fullName, source_status: "Recently opened source from the default branch; source is not pinned to the security review revision.", selection: "Lexical relevance over up to five opened files; not full repository retrieval.", manual_context: manual };
   for (const { score, ...chunk } of sourceChunks(files, question)) {
     if (chunks.length >= 4) break;

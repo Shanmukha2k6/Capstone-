@@ -93,6 +93,8 @@
 .chat-context-panel > div span { display: inline-flex; align-items: center; gap: 6px; }
 .chat-context-panel button { background: transparent; border: 0; color: #a8acc5; padding: 2px; font-size: 12px; }
 .chat-context-panel button:hover { color: #edeefa; }
+.chat-attached-files { display: flex; flex-wrap: wrap; gap: 6px; list-style: none; margin: 0 0 8px; padding: 0; }
+.chat-attached-files li { display: inline-flex; align-items: center; gap: 5px; font-size: 11.5px; color: #c4abff; background: #2e2449; border-radius: 6px; padding: 3px 8px; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .chat-context-panel textarea { width: 100%; min-height: 70px; max-height: 160px; resize: vertical; padding: 10px; color: #e4e5f5; background: #0e101a; border: 1px solid #303449; border-radius: 8px; font: 12px/1.6 "Fira Code", Consolas, monospace; }
 .chat-context-panel p { display: flex; align-items: center; justify-content: space-between; gap: 8px; color: #9599b4; font-size: 11px; margin: 8px 0 0; }
 .chat-error { max-width: 860px; margin: 0 auto 10px; color: #f49fb4; font-size: 13px; line-height: 1.6; padding: 10px 12px; border-radius: 10px; background: #3b2333; }
@@ -110,8 +112,8 @@
   .chat-thinking { margin-left: 40px; }
   .chat-composer-area { padding: 10px 12px 12px; }
   .chat-composer textarea { font-size: 16px; }
+  .chat-composer-tools { justify-content: space-between; gap: 6px; }
   .chat-hint { display: none; }
-  .chat-composer-tools { justify-content: space-between; }
   .chat-context-panel p { flex-wrap: wrap; }
 }
 @media (prefers-reduced-motion: reduce) { .chat-dots i { animation: none; opacity: .8; } }
