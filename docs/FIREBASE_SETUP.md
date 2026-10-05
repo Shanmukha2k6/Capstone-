@@ -30,7 +30,7 @@ Open http://localhost:5173, choose **Sign In → Continue as Guest**, open **Cod
 
 1. Create/select a project in the [Firebase console](https://console.firebase.google.com/).
 2. Register a Web app in Project settings. Copy its config values into the four `VITE_FIREBASE_*` entries in `frontend/.env`. Use `frontend/.env.example` as the reference; preserve your existing API URL.
-3. Enable **Authentication → Email/Password**. Add `localhost` to authorized domains for local development if needed. GitHub sign-in is optional: enable the GitHub provider and configure its callback URL and OAuth credentials in the Firebase console.
+3. Enable **Authentication → Sign-in method → Google** and choose a project support email. Add `localhost` to authorized domains for local development if needed.
 4. Create a **Cloud Firestore** database. Rules deny access by default; deploy this project's rules before signing in.
 5. From the project root:
 
@@ -61,10 +61,10 @@ Vite inlines `VITE_*` variables at **build time**, so a deploy built without the
 
 1. Netlify → **Site configuration → Environment variables**: add `VITE_FIREBASE_API_KEY`, `VITE_FIREBASE_AUTH_DOMAIN`, `VITE_FIREBASE_PROJECT_ID`, `VITE_FIREBASE_APP_ID`, and `VITE_API_URL`. Do not set `VITE_USE_FIREBASE_EMULATORS`.
 2. Firebase Console → **Authentication → Settings → Authorized domains**: add your `*.netlify.app` domain and any custom domain. Without this, sign-in fails with "not an authorized domain".
-3. Firebase Console → **Authentication → Sign-in method**: enable Email/Password (and GitHub, with the callback URL `https://<project-id>.firebaseapp.com/__/auth/handler` set in your GitHub OAuth app).
+3. Firebase Console → **Authentication → Sign-in method**: enable **Google** (Google is the only sign-in method the app uses).
 4. **Trigger a new deploy** (Deploys → Trigger deploy → Clear cache and deploy site) so the variables are baked into the bundle.
 
-GitHub sign-in uses a popup and automatically falls back to a full-page redirect when popups are blocked (common on mobile).
+Google sign-in uses a popup and automatically falls back to a full-page redirect when popups are blocked (common on mobile).
 
 ## Firebase Hosting
 

@@ -1,5 +1,5 @@
 import { initializeApp, getApps, getApp } from "firebase/app";
-import { getAuth, connectAuthEmulator, GithubAuthProvider } from "firebase/auth";
+import { getAuth, connectAuthEmulator, GoogleAuthProvider } from "firebase/auth";
 import { getFirestore, connectFirestoreEmulator } from "firebase/firestore";
 
 export const useFirebaseEmulators = import.meta.env.VITE_USE_FIREBASE_EMULATORS === "true";
@@ -14,8 +14,8 @@ export const isFirebaseConfigured = Object.values(firebaseConfig).every(isRealVa
 export const app = isFirebaseConfigured ? (getApps().length ? getApp() : initializeApp(firebaseConfig)) : null;
 export const auth = app ? getAuth(app) : null;
 export const db = app ? getFirestore(app) : null;
-export const githubProvider = app ? new GithubAuthProvider() : null;
-githubProvider?.addScope("read:user");
+export const googleProvider = app ? new GoogleAuthProvider() : null;
+googleProvider?.setCustomParameters({ prompt: "select_account" });
 
 if (useFirebaseEmulators && !import.meta.env.DEV) {
   throw new Error("Disable VITE_USE_FIREBASE_EMULATORS before building for production.");

@@ -30,9 +30,10 @@ export default function Navbar({ onOpenAuth, sidebarOpen, setSidebarOpen, active
         <span className="engine-badge hidden sm:flex"><span className={health?.status === "healthy" ? "status-dot" : "status-dot offline"} />
           {health?.status === "needs_setup" ? "Gemini key required" : health?.provider === "mock" ? "Demo tools" : health?.status === "offline" ? "API offline" : health?.provider === "gemini" ? "Gemini configured" : health?.provider || "Connecting"}
         </span>
-        {user ? <><span className="user-avatar" title={user.displayName || user.email || "Guest"}>{user.displayName?.[0] || user.email?.[0] || "D"}</span>
+        {user ? <><span className="user-avatar" title={user.displayName || user.email || "Account"}>
+          {user.photoURL ? <img src={user.photoURL} alt="" referrerPolicy="no-referrer" /> : user.displayName?.[0] || user.email?.[0] || "D"}</span>
           <button className="icon-button" onClick={logout} aria-label="Sign Out"><LogOut size={17} /></button></>
-          : <button className="button-dark button-small" onClick={onOpenAuth}>Sign In <ArrowUpRight size={15} /></button>}
+          : <button className="button-dark button-small" onClick={onOpenAuth}>Sign in <ArrowUpRight size={15} /></button>}
       </div>
     </header>
   );

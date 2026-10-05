@@ -35,7 +35,7 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen, activeTab, setAct
       </div>
       <div className="sidebar-bottom">
         <div className="sidebar-profile"><span className="workspace-avatar">{user?.displayName?.[0] || user?.email?.[0] || "D"}</span>
-          <div><strong>{user?.displayName || user?.email?.split("@")[0] || "Guest developer"}</strong><span>{user && !user.isGuest ? "Account workspace" : "Local workspace"}</span></div>
+          <div><strong>{user?.displayName || user?.email?.split("@")[0] || "Local developer"}</strong><span>{user && !user.isGuest ? "Account workspace" : "Local workspace"}</span></div>
           <span className="status-dot" /></div>
       </div>
     </aside>

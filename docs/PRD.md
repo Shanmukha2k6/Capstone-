@@ -96,7 +96,7 @@ Completion demo: import a small public repository, select/analyze multiple sourc
 
 ## 3. Architecture & Tech Stack (Simplified & Cloud-Ready)
 - **Frontend**: React 18 (Vite), Tailwind CSS, Lucide React, Monaco Editor, React Markdown, Recharts.
-- **Authentication**: Firebase Authentication (Email/Password + GitHub OAuth).
+- **Authentication**: Firebase Authentication (Google sign-in).
 - **Database**: Cloud Firestore (NoSQL for user profiles, analysis history, saved repos, and chat transcripts).
 - **Backend API**: FastAPI (Python 3.11+) for high-performance async processing, LLM streaming, token budgeting, and GitHub API interactions.
 - **AI Gateway**: Google Gemini (`gemini-1.5-flash` / `gemini-1.5-pro` / `gemini-2.0`) & OpenAI (`gpt-4o-mini` / `gpt-4o`) adapters with fallback and retry logic.

@@ -34,7 +34,7 @@
 ## Architectural Highlights
 
 ### 1. Decoupled Authentication & Storage (Firebase)
-- **Firebase Auth**: Zero-boilerplate auth with Email/Password and native GitHub OAuth. Eliminates token refresh race conditions and password hashing vulnerabilities.
+- **Firebase Auth**: Zero-boilerplate auth with 1-click Google sign-in. Eliminates token refresh race conditions and password hashing vulnerabilities.
 - **Cloud Firestore**: Serverless, zero-maintenance NoSQL database. Stores saved analyses, user preferences, repositories, and chat conversations. Can be accessed securely directly via Firebase Security Rules or via backend verification.
 
 ### 2. Dedicated AI & Analysis Engine (FastAPI)

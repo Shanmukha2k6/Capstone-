@@ -13,9 +13,10 @@ const MESSAGES = {
   "auth/too-many-requests": "Too many attempts. Wait a moment and try again.",
   "auth/network-request-failed": "Network error. Check your connection and try again.",
   "auth/popup-closed-by-user": "Sign-in window was closed before finishing.",
+  "auth/user-cancelled": "Google sign-in was cancelled.",
   "auth/cancelled-popup-request": "Sign-in window was closed before finishing.",
   "auth/account-exists-with-different-credential":
-    "This email is already registered with a different sign-in method. Use email and password instead.",
+    "This email is already linked to a different sign-in method.",
   "auth/operation-not-allowed":
     "This sign-in method is not enabled. Enable it in Firebase Console → Authentication → Sign-in method.",
   "auth/invalid-api-key": "Firebase API key is invalid. Check the VITE_FIREBASE_* environment variables.",

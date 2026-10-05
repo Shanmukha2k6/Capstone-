@@ -31,7 +31,7 @@ React (Vite + Tailwind CSS + Monaco)
 ```
 
 - **Frontend**: React 18, Vite, Tailwind CSS, Lucide React, Monaco Editor, Recharts.
-- **Auth & Database**: Firebase Authentication (Email/Password + GitHub OAuth) & owner-scoped Cloud Firestore records.
+- **Auth & Database**: Firebase Authentication (Google sign-in) & owner-scoped Cloud Firestore records.
 - **Backend API**: FastAPI (Python 3.11+), Pydantic v2, async HTTPX, Server-Sent Events (SSE).
 - **AI Gateway**: Gemini source reviews and streaming chat use configured models and explicit provider errors. Other snippet adapters still support mock development output.
 

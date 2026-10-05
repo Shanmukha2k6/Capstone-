@@ -14,7 +14,7 @@ Stack: **React (Vite + Tailwind CSS)** + **Firebase (Auth & Firestore)** fronten
 - **Frontend Architecture**:
   - React (Vite) + Tailwind CSS + Lucide Icons + Monaco Editor.
   - Functional components with hooks, clean component separation, no inline styles.
-  - Firebase SDK for client-side Auth (Email/Password & 1-click GitHub OAuth) and Firestore (history, saved analyses, chat sessions).
+  - Firebase SDK for client-side Auth (1-click Google sign-in) and Firestore (history, saved analyses, chat sessions).
   - Responsive layout, dark mode support, clear loading skeletons, error boundaries, and empty states.
 - **Security & Quality**:
   - Never execute user code directly; treat all submitted code as data, strictly delimited by `<language>` and `<code>` tags.

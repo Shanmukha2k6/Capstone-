@@ -1,29 +1,53 @@
-import React, { useState } from "react";
-import { X, Github, Sparkles } from "lucide-react";
+import React, { useEffect, useState } from "react";
+import { X, ShieldCheck, Cloud, Sparkles, Loader2 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { getAuthErrorMessage, SILENT_CODES } from "../firebase/authErrors";
 
+const FEATURES = [
+  { icon: Sparkles, text: "AI code reviews, explanations, and refactors" },
+  { icon: ShieldCheck, text: "Repository security scans with tracked decisions" },
+  { icon: Cloud, text: "History synced securely across your devices" },
+];
+
+function GoogleLogo() {
+  return (
+    <svg className="auth-google-logo" viewBox="0 0 48 48" aria-hidden="true">
+      <path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z" />
+      <path fill="#FF3D00" d="m6.3 14.7 6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z" />
+      <path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2c-2 1.5-4.5 2.4-7.2 2.4-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z" />
+      <path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z" />
+    </svg>
+  );
+}
+
 export default function AuthModal({ isOpen, onClose }) {
-  const { loginWithEmail, registerWithEmail, resetPassword, loginWithGithub, loginAsGuest,
-    isFirebaseConfigured, authError, clearAuthError } = useAuth();
-  const [isRegister, setIsRegister] = useState(false);
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const { loginWithGoogle, isFirebaseConfigured, authError, clearAuthError } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [notice, setNotice] = useState(null);
+
+  const handleClose = () => {
+    if (loading) return;
+    setError(null);
+    clearAuthError();
+    onClose();
+  };
+  useEffect(() => {
+    if (!isOpen) return undefined;
+    const onKey = (e) => { if (e.key === "Escape") handleClose(); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  });
 
   if (!isOpen) return null;
   const shownError = error || (authError ? getAuthErrorMessage(authError) : null);
 
-  const run = async (action, { close = true } = {}) => {
+  const handleGoogle = async () => {
     setLoading(true);
     setError(null);
-    setNotice(null);
     clearAuthError();
     try {
-      await action();
-      if (close) onClose();
+      await loginWithGoogle();
+      onClose();
     } catch (err) {
       if (!SILENT_CODES.has(err?.code)) setError(getAuthErrorMessage(err));
     } finally {
@@ -31,158 +55,40 @@ export default function AuthModal({ isOpen, onClose }) {
     }
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    run(() => (isRegister ? registerWithEmail(email, password) : loginWithEmail(email, password)));
-  };
-  const handleGithub = () => run(loginWithGithub);
-  const handleGuest = () => run(loginAsGuest);
-  const handleReset = () => {
-    if (!email.trim()) { setError("Enter your email above, then click \"Forgot password?\" again."); return; }
-    run(async () => {
-      await resetPassword(email);
-      setNotice(`If an account exists for ${email.trim()}, a reset link is on its way.`);
-    }, { close: false });
-  };
-  const handleClose = () => { if (!loading) { clearAuthError(); onClose(); } };
-  const switchMode = (register) => { setIsRegister(register); setError(null); setNotice(null); };
-
   return (
-    <div className="fixed inset-0 z-50 bg-slate-950/45 backdrop-blur-sm flex items-center justify-center p-4 select-none" role="dialog" aria-modal="true" aria-labelledby="auth-title">
-      <div className="w-full max-w-sm max-h-[calc(100dvh-32px)] overflow-y-auto bg-gpt-surface border border-gpt-border rounded-3xl shadow-2xl p-6 space-y-5 relative animate-in fade-in zoom-in-95 duration-200">
-        <button
-          onClick={handleClose}
-          aria-label="Close sign-in"
-          className="absolute right-4 top-4 text-gpt-muted hover:text-gpt-text p-1 rounded-full transition"
-        >
-          <X className="w-4 h-4" />
-        </button>
+    <div className="auth-backdrop" role="dialog" aria-modal="true" aria-labelledby="auth-title" onMouseDown={(e) => e.target === e.currentTarget && handleClose()}>
+      <div className="auth-card">
+        <button onClick={handleClose} aria-label="Close sign-in" className="auth-close"><X size={16} /></button>
 
-        <div className="auth-art"><img src="/images/devmind-orbit.png" alt="" /></div>
-        <div className="space-y-1 text-center">
-          <div className="w-10 h-10 rounded-full bg-gpt-sidebar border border-gpt-border flex items-center justify-center mx-auto mb-2 text-gpt-accent">
-            <Sparkles className="w-5 h-5" />
-          </div>
-          <h2 id="auth-title" className="text-lg font-semibold text-gpt-text">
-            {isRegister ? "Create your account" : "Welcome back"}
-          </h2>
-          <p className="text-xs text-gpt-muted">
-            {isFirebaseConfigured ? "Sign in to sync your analyses across devices." : "Account sign-in isn't configured on this deployment yet."}
-          </p>
+        <div className="auth-hero">
+          <img src="/images/devmind-orbit.png" alt="" className="auth-hero-img" />
+          <div className="auth-hero-glow" />
+          <div className="auth-brand"><span className="auth-brand-mark"><Sparkles size={16} /></span>DevMind AI</div>
         </div>
 
-        {!isFirebaseConfigured && (
-          <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-500 text-xs text-center">
-            Email and GitHub sign-in need Firebase settings (VITE_FIREBASE_*). You can still continue as a guest.
+        <div className="auth-body">
+          <div className="text-center space-y-1.5">
+            <h2 id="auth-title" className="text-xl font-semibold text-gpt-text tracking-tight">Welcome to DevMind</h2>
+            <p className="text-sm text-gpt-muted">Sign in to save your work and pick up where you left off.</p>
           </div>
-        )}
 
-        {shownError && (
-          <div role="alert" className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs text-center">
-            {shownError}
-          </div>
-        )}
+          <ul className="auth-features">
+            {FEATURES.map(({ icon: Icon, text }) => (
+              <li key={text}><span className="auth-feature-icon"><Icon size={14} /></span>{text}</li>
+            ))}
+          </ul>
 
-        {notice && (
-          <div role="status" className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 text-xs text-center">
-            {notice}
-          </div>
-        )}
-
-        {/* GitHub OAuth Button */}
-        <button
-          onClick={handleGithub}
-          disabled={loading || !isFirebaseConfigured}
-          className="w-full flex items-center justify-center space-x-2 py-2.5 rounded-full bg-gpt-sidebar hover:bg-gpt-surfaceHover disabled:opacity-40 disabled:cursor-not-allowed border border-gpt-border text-gpt-text text-xs font-medium transition"
-        >
-          <Github className="w-4 h-4" />
-          <span>Continue with GitHub</span>
-        </button>
-
-        <div className="flex items-center space-x-2">
-          <div className="flex-1 h-px bg-gpt-border/60" />
-          <span className="text-[11px] text-gpt-muted uppercase tracking-wider">or</span>
-          <div className="flex-1 h-px bg-gpt-border/60" />
-        </div>
-
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="space-y-3">
-          <input
-            type="email"
-            aria-label="Email address"
-            autoComplete="email"
-            required
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="Email address"
-            className="w-full bg-gpt-sidebar border border-gpt-border rounded-xl px-3.5 py-2 text-xs text-gpt-text placeholder-gpt-muted focus:outline-none focus:border-violet-400"
-          />
-
-          <input
-            type="password"
-            aria-label="Password"
-            minLength={6}
-            autoComplete={isRegister ? "new-password" : "current-password"}
-            required
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="Password"
-            className="w-full bg-gpt-sidebar border border-gpt-border rounded-xl px-3.5 py-2 text-xs text-gpt-text placeholder-gpt-muted focus:outline-none focus:border-violet-400"
-          />
-
-          {!isRegister && isFirebaseConfigured && (
-            <div className="text-right">
-              <button type="button" onClick={handleReset} disabled={loading} className="text-[11px] text-gpt-muted hover:text-gpt-text transition">
-                Forgot password?
-              </button>
-            </div>
+          {!isFirebaseConfigured && (
+            <div role="status" className="auth-alert auth-alert-warn">Google sign-in isn't configured on this deployment yet.</div>
           )}
+          {shownError && <div role="alert" className="auth-alert auth-alert-error">{shownError}</div>}
 
-          <button
-            type="submit"
-            disabled={loading || !isFirebaseConfigured}
-            className="w-full py-2.5 rounded-full bg-violet-600 hover:bg-violet-700 disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs font-semibold transition"
-          >
-            {loading ? "Please wait..." : isRegister ? "Sign Up" : "Continue"}
+          <button onClick={handleGoogle} disabled={loading || !isFirebaseConfigured} className="auth-google-btn">
+            {loading ? <Loader2 size={18} className="animate-spin" /> : <GoogleLogo />}
+            <span>{loading ? "Signing in…" : "Continue with Google"}</span>
           </button>
-        </form>
 
-        {/* Guest Demo button */}
-        <div className="text-center">
-          <button
-            onClick={handleGuest}
-            disabled={loading}
-            className="text-xs text-gpt-muted hover:text-gpt-text transition"
-          >
-            Continue as Guest &rarr;
-          </button>
-        </div>
-
-        {/* Switch mode */}
-        <div className="text-center text-xs text-gpt-muted border-t border-gpt-border/60 pt-3">
-          {isRegister ? (
-            <p>
-              Already have an account?{" "}
-              <button
-                type="button"
-                onClick={() => switchMode(false)}
-                className="text-gpt-text hover:underline font-medium"
-              >
-                Log in
-              </button>
-            </p>
-          ) : (
-            <p>
-              Don't have an account?{" "}
-              <button
-                type="button"
-                onClick={() => switchMode(true)}
-                className="text-gpt-text hover:underline font-medium"
-              >
-                Sign up
-              </button>
-            </p>
-          )}
+          <p className="auth-footnote">We only use your Google name, email, and photo to create your workspace.</p>
         </div>
       </div>
     </div>
