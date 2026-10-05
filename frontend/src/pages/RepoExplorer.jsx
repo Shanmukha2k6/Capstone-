@@ -77,7 +77,7 @@ export default function RepoExplorer({ onOpenInWorkspace, onOpenSettings, projec
     {showTokenInput && <div className="bg-gpt-surface border border-gpt-border rounded-xl p-3 flex flex-wrap gap-2 shrink-0">
       <input aria-label="GitHub access token" type="password" value={tokenInput} onChange={(event) => setTokenInput(event.target.value)} placeholder="Optional token for private repos or higher limits" className="flex-1 min-w-0 bg-gpt-sidebar border border-gpt-border rounded-lg px-3 py-2 text-xs" />
       <button onClick={() => { saveGithubToken(tokenInput); setShowTokenInput(false); }} className="px-3 py-2 rounded-lg bg-violet-600 text-white text-xs font-semibold">Use token</button>
-      <p className="basis-full text-xs text-gpt-muted">Kept in memory for this session. Public repositories can be loaded without a token.</p>
+      <p className="basis-full text-xs text-gpt-muted">Saved on this device and reused across reloads. Raises the GitHub rate limit and enables private repositories. Never written to project or review storage.</p>
     </div>}
     {error && <div role="alert" className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/25 text-rose-300 text-xs flex gap-2 shrink-0"><AlertCircle size={16} className="shrink-0" />{error}</div>}
     {loading && <p role="status" className="text-xs text-violet-600 shrink-0">Connecting to GitHub…</p>}

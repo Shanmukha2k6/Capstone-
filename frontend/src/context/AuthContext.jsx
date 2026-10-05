@@ -4,16 +4,30 @@ import { POPUP_FALLBACK_CODES } from "../firebase/authErrors";
 import { signInWithPopup, signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged } from "firebase/auth";
 
 const LEGACY_KEYS = ["devmind_gh_token", "devmind_guest_session", "devmind_demo_user"];
+const GITHUB_TOKEN_KEY = "devmind_github_token";
 const clearLegacyStorage = () => {
   try { LEGACY_KEYS.forEach((key) => localStorage.removeItem(key)); } catch { /* storage unavailable */ }
+};
+const readStoredToken = () => {
+  try { return localStorage.getItem(GITHUB_TOKEN_KEY) || ""; } catch { return ""; }
 };
 
 const AuthContext = createContext(null);
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(Boolean(auth));
-  const [githubToken, setGithubToken] = useState("");
+  const [githubToken, setGithubToken] = useState(readStoredToken);
   const [authError, setAuthError] = useState(null);
+
+  // Persist the GitHub token on this device only so it survives reloads; it is never sent to DevMind storage.
+  const saveGithubToken = (token) => {
+    const value = (token || "").trim();
+    setGithubToken(value);
+    try {
+      if (value) localStorage.setItem(GITHUB_TOKEN_KEY, value);
+      else localStorage.removeItem(GITHUB_TOKEN_KEY);
+    } catch { /* storage unavailable */ }
+  };
 
   useEffect(() => {
     clearLegacyStorage();
@@ -37,11 +51,11 @@ export const AuthProvider = ({ children }) => {
   const logout = async () => {
     if (auth) await signOut(auth);
     setUser(null);
-    setGithubToken("");
+    saveGithubToken("");
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, githubToken, saveGithubToken: setGithubToken,
+    <AuthContext.Provider value={{ user, loading, githubToken, saveGithubToken,
       authError, clearAuthError: () => setAuthError(null), loginWithGoogle, logout, isFirebaseConfigured }}>
       {children}
     </AuthContext.Provider>
