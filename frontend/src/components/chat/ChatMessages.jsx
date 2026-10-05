@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
+import { Command, UserRound } from "lucide-react";
 
 function CopyButton({ value, label = "Copy answer", className = "chat-copy" }) {
   const [copied, setCopied] = useState(false);
@@ -29,12 +30,13 @@ export default function ChatMessages({ messages, streaming }) {
   return <div className="chat-messages">
     {messages.map((message, index) => !message.content && !message.failed ? null :
       <article key={index} aria-label={message.role === "user" ? "Your message" : "Assistant response"} className={`chat-message ${message.role === "user" ? "from-user" : "from-assistant"}`}>
-        <div className="chat-message-body">{message.failed && <div className="chat-message-label">{message.content ? "Incomplete response" : "Response unavailable"}</div>}
+        <span className="chat-avatar" aria-hidden="true">{message.role === "user" ? <UserRound size={16} /> : <Command size={16} />}</span>
+        <div className="chat-message-body"><span className="chat-author">{message.role === "user" ? "You" : "DevMind"}</span>{message.failed && <div className="chat-message-label">{message.content ? "Incomplete response" : "Response unavailable"}</div>}
           {message.role === "user" ? <p className="chat-user-text">{message.content}</p> : <div className="chat-markdown"><ReactMarkdown skipHtml components={{ pre: CodeBlock, a: ({ node, ...props }) => <a {...props} target="_blank" rel="noreferrer" /> }}>{message.content}</ReactMarkdown></div>}
           {message.role === "assistant" && message.content && <CopyButton value={message.content} />}
         </div>
       </article>)}
-    {streaming && <div className="chat-thinking" role="status">Thinking…</div>}
+    {streaming && <div className="chat-thinking" role="status"><span className="chat-dots"><i /><i /><i /></span>Reading your code…</div>}
     <div ref={end} />
   </div>;
 }
