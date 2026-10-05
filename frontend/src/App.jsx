@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Navbar from "./components/Navbar";
 import Sidebar from "./components/Sidebar";
 import WorkspaceContent from "./components/WorkspaceContent";
@@ -17,6 +17,8 @@ function AppShell() {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(() => window.innerWidth >= 768);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
+  const { authError } = useAuth();
+  useEffect(() => { if (authError) setIsAuthOpen(true); }, [authError]);
   const historyState = useAnalysisHistory(), security = useSecurityWorkspace();
   const [workspacePreload, setWorkspacePreload] = useState(null);
   const openWorkspace = ({ code, language, tool = "bugs", data = null }) => {

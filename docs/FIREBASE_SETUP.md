@@ -55,6 +55,17 @@ firebase emulators:start --project demo-devmind --only auth,firestore
 
 Restart Vite. Sign up with a test email and password. The Emulator UI is at http://127.0.0.1:4000. Only bind to localhost. Emulator data is temporary unless explicitly exported.
 
+## Netlify deployment (sign-in checklist)
+
+Vite inlines `VITE_*` variables at **build time**, so a deploy built without them ships with account sign-in disabled (only guest mode works).
+
+1. Netlify → **Site configuration → Environment variables**: add `VITE_FIREBASE_API_KEY`, `VITE_FIREBASE_AUTH_DOMAIN`, `VITE_FIREBASE_PROJECT_ID`, `VITE_FIREBASE_APP_ID`, and `VITE_API_URL`. Do not set `VITE_USE_FIREBASE_EMULATORS`.
+2. Firebase Console → **Authentication → Settings → Authorized domains**: add your `*.netlify.app` domain and any custom domain. Without this, sign-in fails with "not an authorized domain".
+3. Firebase Console → **Authentication → Sign-in method**: enable Email/Password (and GitHub, with the callback URL `https://<project-id>.firebaseapp.com/__/auth/handler` set in your GitHub OAuth app).
+4. **Trigger a new deploy** (Deploys → Trigger deploy → Clear cache and deploy site) so the variables are baked into the bundle.
+
+GitHub sign-in uses a popup and automatically falls back to a full-page redirect when popups are blocked (common on mobile).
+
 ## Firebase Hosting
 
 For cloud builds, set `VITE_USE_FIREBASE_EMULATORS=false` and supply the real Firebase web config. Set `VITE_API_URL` to your deployed HTTPS FastAPI service's `/api` URL before building. Add your Hosting domain to the backend's `ALLOWED_ORIGINS` and Firebase Auth authorized domains.
