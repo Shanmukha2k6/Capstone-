@@ -38,7 +38,7 @@ function AppShell({ onGoHome, onSignIn }) {
   const connectRepository = async (repository, tree) => { await security.connect(repository, tree); setActiveTab("projects"); };
   return <div className="devmind-shell">
     <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} activeTab={activeTab} setActiveTab={setActiveTab}
-      history={historyState.history} projects={security.projects} activeProject={security.activeProject} onSelectProject={openProject} />
+      history={historyState.history} />
     <div className="app-main-column">
       <Navbar onOpenAuth={onSignIn} onGoHome={onGoHome} sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} activeTab={activeTab} />
       <WorkspaceContent activeTab={activeTab} security={security} historyState={historyState} workspacePreload={workspacePreload}
