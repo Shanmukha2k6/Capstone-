@@ -41,6 +41,10 @@ input:focus-visible, textarea:focus-visible, select:focus-visible { outline: 2px
 .sidebar-profile .workspace-avatar { overflow: hidden; }
 .sidebar-profile .workspace-avatar img { width: 100%; height: 100%; object-fit: cover; }
 .sidebar-profile div { min-width: 0; flex: 1; }
+.sidebar-profile strong, .sidebar-profile div > span { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sidebar-profile strong { font-size: 12.5px; font-weight: 600; color: #edeefa; }
+.sidebar-profile div > span { font-size: 10.5px; color: #a8acc5; margin-top: 2px; }
+.sidebar-profile .icon-button { width: 30px; height: 30px; flex-shrink: 0; }
 .sidebar-scrim { position: fixed; inset: 0; background: #21133355; border: 0; z-index: 40; backdrop-filter: blur(3px); }
 .button-dark { display: inline-flex; align-items: center; justify-content: center; gap: 8px; border: 0; background: #7346e8; color: #fff; padding: 11px 16px; border-radius: 9px; font-size: 13px; font-weight: 600; line-height: 1.3; transition: background .18s; white-space: nowrap; }
 .button-dark:hover { background: #5e30d3; }
