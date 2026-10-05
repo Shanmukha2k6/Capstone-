@@ -1,4 +1,5 @@
 import { buildRepoContext, repoSnapshot } from "./repoContext";
+import { bugPrompt, clampFindings, explainPrompt, measureCode, qualityPrompt, refactorPrompt } from "./snippetPrompts";
 
 const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
 // In production, GitHub REST calls go through the Vercel proxy (/api/gh), which adds a
@@ -311,32 +312,65 @@ async function streamDirectGemini(apiKey, repoName, messages, context, onToken, 
   });
 }
 
-async function directGeminiJson(apiKey, prompt, systemPrompt) {
-  return callGeminiWithFallback(apiKey, async (model) => {
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
-    const res = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        systemInstruction: systemPrompt ? { parts: [{ text: systemPrompt }] } : undefined,
-        contents: [{ role: "user", parts: [{ text: prompt }] }],
-        generationConfig: {
-          temperature: 0.2,
-          responseMimeType: "application/json"
-        }
-      })
-    });
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      if (res.status === 404) {
-        throw new Error(err.error?.message || `models/${model} is not found`);
-      }
-      throw new Error(err.error?.message || `Gemini API error (${res.status})`);
-    }
-    const data = await res.json();
-    const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
-    return JSON.parse(text);
+// Snippet analyses cap the model's hidden "thinking" so answers arrive in seconds, not minutes.
+// Models without thinking support reject the field, so it is dropped for them on first refusal.
+const SNIPPET_THINKING_BUDGET = 2048;
+let thinkingUnsupported = false;
+
+async function postGeminiJson(apiKey, model, prompt, systemPrompt, thinkingBudget) {
+  const generationConfig = { temperature: 0.2, responseMimeType: "application/json" };
+  if (thinkingBudget != null && !thinkingUnsupported) generationConfig.thinkingConfig = { thinkingBudget };
+  const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      systemInstruction: systemPrompt ? { parts: [{ text: systemPrompt }] } : undefined,
+      contents: [{ role: "user", parts: [{ text: prompt }] }],
+      generationConfig
+    })
   });
+  if (res.ok) return res.json();
+  const err = await res.json().catch(() => ({}));
+  const message = err.error?.message || "";
+  if (res.status === 400 && generationConfig.thinkingConfig && /thinking/i.test(message)) {
+    thinkingUnsupported = true;
+    return postGeminiJson(apiKey, model, prompt, systemPrompt, null);
+  }
+  if (res.status === 404) throw new Error(message || `models/${model} is not found`);
+  throw new Error(message || `Gemini API error (${res.status})`);
+}
+
+async function directGeminiJson(apiKey, prompt, systemPrompt, thinkingBudget = null) {
+  return callGeminiWithFallback(apiKey, async (model) => {
+    const data = await postGeminiJson(apiKey, model, prompt, systemPrompt, thinkingBudget);
+    const parts = data.candidates?.[0]?.content?.parts || [];
+    const text = parts.filter((p) => !p.thought).map((p) => p.text || "").join("") || "{}";
+    return JSON.parse(text.replace(/^\s*```(?:json)?\s*|\s*```\s*$/g, ""));
+  });
+}
+
+// When the deployed site has no reachable backend, skip it instead of failing a request first.
+let backendOffline = import.meta.env.PROD && /localhost|127\.0\.0\.1/.test(BASE_URL);
+
+/** Runs a snippet analysis on the backend when reachable, otherwise straight against Gemini. */
+async function snippetRequest(endpoint, body, buildPrompt, offlineMessage) {
+  if (!backendOffline) {
+    try {
+      const res = await fetch(`${BASE_URL}/analyze/${endpoint}`, {
+        method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body)
+      });
+      if (res.ok) return res.json();
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || `Code analysis failed (HTTP ${res.status})`);
+    } catch (err) {
+      if (!isNetworkError(err)) throw err;
+      backendOffline = true;
+    }
+  }
+  const key = getStoredKey();
+  if (!key) throw new Error(offlineMessage);
+  const { system, prompt } = buildPrompt();
+  return directGeminiJson(key, prompt, system, SNIPPET_THINKING_BUDGET);
 }
 
 const MALWARE_CATEGORIES = ["credential_theft", "data_exfiltration", "persistence", "remote_execution", "destructive_behavior",
@@ -541,80 +575,26 @@ export const api = {
     return { status: "offline", provider: "client-direct" };
   },
 
-  async explainCode(code, language = "python", level = "intermediate") {
-    try {
-      const res = await fetch(`${BASE_URL}/analyze/explain`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code, language, level })
-      });
-      if (res.ok) return res.json();
-      const err = await res.json().catch(() => ({ detail: "Analysis failed" }));
-      throw new Error(err.detail || "Failed to explain code");
-    } catch (err) {
-      if (!isNetworkError(err)) throw err;
-      const key = getStoredKey();
-      if (!key) throw new Error("DevMind backend is offline. Enter a Gemini API key in Settings to analyze code.");
-      const prompt = `Explain this ${language} code for a ${level} developer:\n\`\`\`${language}\n${code}\n\`\`\`\nReturn JSON with keys: purpose (string), walkthrough (array of strings), key_concepts (array of strings), time_complexity (string), space_complexity (string), pitfalls (array of strings), line_notes (array of {line: number, note: string}).`;
-      return directGeminiJson(key, prompt, "You are a code tutor providing clear, accurate analysis in JSON format.");
-    }
+  explainCode(code, language = "python", level = "intermediate") {
+    return snippetRequest("explain", { code, language, level }, () => explainPrompt(code, language, level),
+      "DevMind backend is offline. Enter a Gemini API key in Settings to analyze code.");
   },
 
   async scanBugs(code, language = "python") {
-    try {
-      const res = await fetch(`${BASE_URL}/analyze/bugs`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code, language })
-      });
-      if (res.ok) return res.json();
-      const err = await res.json().catch(() => ({ detail: "Scan failed" }));
-      throw new Error(err.detail || "Failed to scan bugs");
-    } catch (err) {
-      if (!isNetworkError(err)) throw err;
-      const key = getStoredKey();
-      if (!key) throw new Error("DevMind backend is offline. Enter a Gemini API key in Settings to scan bugs.");
-      const prompt = `Analyze this ${language} code for bugs and security vulnerabilities:\n\`\`\`${language}\n${code}\n\`\`\`\nReturn JSON with keys: summary (string), findings (array of {id: string, title: string, severity: 'critical'|'high'|'medium'|'low'|'info', category: string, cwe: string, line_start: number, line_end: number, explanation: string, fix: string, fixed_code: string, confidence: number}).`;
-      return directGeminiJson(key, prompt, "You are an application security specialist analyzing code for vulnerabilities.");
-    }
+    const res = await snippetRequest("bugs", { code, language }, () => bugPrompt(code, language),
+      "DevMind backend is offline. Enter a Gemini API key in Settings to scan bugs.");
+    return { ...res, findings: clampFindings(res.findings, code) };
   },
 
-  async suggestRefactor(code, language = "python", focus = "all") {
-    try {
-      const res = await fetch(`${BASE_URL}/analyze/refactor`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code, language, focus })
-      });
-      if (res.ok) return res.json();
-      const err = await res.json().catch(() => ({ detail: "Refactor failed" }));
-      throw new Error(err.detail || "Failed to get refactoring suggestions");
-    } catch (err) {
-      if (!isNetworkError(err)) throw err;
-      const key = getStoredKey();
-      if (!key) throw new Error("DevMind backend is offline. Enter a Gemini API key in Settings to suggest refactors.");
-      const prompt = `Suggest refactoring for this ${language} code focusing on ${focus}:\n\`\`\`${language}\n${code}\n\`\`\`\nReturn JSON with keys: summary (string), suggestions (array of {id: string, title: string, impact: 'high'|'medium'|'low', category: string, rationale: string, before_code: string, after_code: string, risk_level: string}).`;
-      return directGeminiJson(key, prompt, "You are a software architect improving code readability, performance, and structure.");
-    }
+  suggestRefactor(code, language = "python", focus = "all") {
+    return snippetRequest("refactor", { code, language, focus }, () => refactorPrompt(code, language, focus),
+      "DevMind backend is offline. Enter a Gemini API key in Settings to suggest refactors.");
   },
 
   async analyzeQuality(code, language = "python") {
-    try {
-      const res = await fetch(`${BASE_URL}/analyze/quality`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code, language })
-      });
-      if (res.ok) return res.json();
-      const err = await res.json().catch(() => ({ detail: "Quality analysis failed" }));
-      throw new Error(err.detail || "Failed to analyze code quality");
-    } catch (err) {
-      if (!isNetworkError(err)) throw err;
-      const key = getStoredKey();
-      if (!key) throw new Error("DevMind backend is offline. Enter a Gemini API key in Settings to analyze quality.");
-      const prompt = `Analyze quality metrics for this ${language} code:\n\`\`\`${language}\n${code}\n\`\`\`\nReturn JSON with keys: overall_score (number 0-100), dimensions ({maintainability: number, security: number, complexity: number, documentation: number}), metrics ({loc: number, comment_ratio: number, cyclomatic_complexity: number}), recommendations (array of strings).`;
-      return directGeminiJson(key, prompt, "You are a code auditor calculating quality scores and recommendations.");
-    }
+    const res = await snippetRequest("quality", { code, language }, () => qualityPrompt(code, language),
+      "DevMind backend is offline. Enter a Gemini API key in Settings to analyze quality.");
+    return { ...res, metrics: { ...res.metrics, ...measureCode(code) } };
   },
 
   async generateReadme(projectName, description, techStack, features, codeSamples = []) {
