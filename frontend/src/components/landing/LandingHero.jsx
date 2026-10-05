@@ -41,7 +41,7 @@ export default function LandingHero({ onOpenApp }) {
             <button className="button-dark lp-cta" onClick={onOpenApp}>Start free <ArrowRight size={17} /></button>
             <a className="lp-ghost-button" href="#workflow">See how it works</a>
           </div>
-          <ul className="lp-hero-points"><li>No credit card</li><li>Use your own Gemini key</li><li>Code is never executed</li></ul>
+          <ul className="lp-hero-points"><li>One-click Google sign-in</li><li>Use your own Gemini key</li><li>Code is never executed</li></ul>
         </div>
         <ProductPreview />
       </div>

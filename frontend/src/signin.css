@@ -31,10 +31,6 @@
 .signin-mobile-logo { display: none; margin-bottom: 8px; }
 .signin-form h1 { font-size: 30px; letter-spacing: -.035em; font-weight: 750; margin: 0; }
 .signin-sub { color: #9fa3bf; font-size: 14.5px; line-height: 1.6; margin: -6px 0 12px; }
-.signin-divider { display: flex; align-items: center; gap: 14px; color: #7e82a0; font-size: 12px; }
-.signin-divider::before, .signin-divider::after { content: ""; flex: 1; height: 1px; background: #262a3c; }
-.signin-guest { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 13px 18px; border-radius: 14px; border: 1px solid #303449; background: #141722; color: #edeefa; font-size: 14px; font-weight: 600; transition: border-color .15s, background .15s; }
-.signin-guest:hover { background: #191c2a; border-color: #454963; }
 .signin-legal { margin: 0; text-align: center; font-size: 12px; color: #6e7290; }
 
 @media (max-width: 899px) {

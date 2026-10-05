@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { ArrowLeft, ArrowRight, Cloud, Loader2, ShieldCheck, Sparkles } from "lucide-react";
+import { ArrowLeft, Cloud, Loader2, ShieldCheck, Sparkles } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { getAuthErrorMessage, SILENT_CODES } from "../firebase/authErrors";
 import { BrandLogo } from "../components/landing/LandingNav";
@@ -38,7 +38,7 @@ function BrandPanel() {
   );
 }
 
-export default function SignInPage({ onBack, onSignedIn, onContinueAsGuest }) {
+export default function SignInPage({ onBack, onSignedIn }) {
   const { user, loginWithGoogle, isFirebaseConfigured, authError, clearAuthError } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -60,16 +60,14 @@ export default function SignInPage({ onBack, onSignedIn, onContinueAsGuest }) {
         <div className="signin-form">
           <span className="signin-mobile-logo"><BrandLogo /></span>
           <h1>Sign in to DevMind</h1>
-          <p className="signin-sub">Save your projects, reviews, and decisions to your account.</p>
+          <p className="signin-sub">Continue with Google to open your workspace. Projects, reviews, and decisions sync to your account.</p>
           {!isFirebaseConfigured && <div role="status" className="auth-alert auth-alert-warn">Google sign-in isn't configured on this deployment yet.</div>}
           {shownError && <div role="alert" className="auth-alert auth-alert-error">{shownError}</div>}
           <button onClick={handleGoogle} disabled={loading || !isFirebaseConfigured} className="auth-google-btn">
             {loading ? <Loader2 size={18} className="animate-spin" /> : <GoogleLogo />}
             <span>{loading ? "Signing in…" : "Continue with Google"}</span>
           </button>
-          <div className="signin-divider"><span>or</span></div>
-          <button className="signin-guest" onClick={onContinueAsGuest}>Continue without an account <ArrowRight size={16} /></button>
-          <p className="auth-footnote">Guest work is saved only in this browser. We use your Google name, email, and photo to create your workspace.</p>
+          <p className="auth-footnote">A Google account is required. We use your Google name, email, and photo to create your workspace.</p>
         </div>
         <p className="signin-legal">© {new Date().getFullYear()} DevMind AI</p>
       </main>

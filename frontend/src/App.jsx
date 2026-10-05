@@ -13,13 +13,15 @@ import "./security.css";
 export default function App() { return <AuthProvider><Router /></AuthProvider>; }
 function Router() {
   const [route, navigate] = useHashRoute();
-  const { user, authError } = useAuth();
+  const { user, loading, authError } = useAuth();
   const goApp = useCallback(() => navigate("app"), [navigate]);
   const goHome = useCallback(() => navigate("home"), [navigate]);
   const goLogin = useCallback(() => navigate("login"), [navigate]);
-  useEffect(() => { if (authError) goLogin(); }, [authError, goLogin]);
-  if (route === "login") return <SignInPage onBack={goHome} onSignedIn={goApp} onContinueAsGuest={goApp} />;
-  if (route === "home") return <LandingPage onOpenApp={goApp} onSignIn={goLogin} />;
+  const needsLogin = route === "app" && !loading && !user;
+  useEffect(() => { if (authError || needsLogin) goLogin(); }, [authError, needsLogin, goLogin]);
+  if (route === "login") return <SignInPage onBack={goHome} onSignedIn={goApp} />;
+  if (route === "home") return <LandingPage onOpenApp={user ? goApp : goLogin} onSignIn={goLogin} />;
+  if (!user) return <div className="auth-loading" role="status">Checking your session…</div>;
   return <AppShell key={user?.uid || "signed-out"} onGoHome={goHome} onSignIn={goLogin} />;
 }
 function AppShell({ onGoHome, onSignIn }) {

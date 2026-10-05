@@ -9,7 +9,7 @@ import SignInPage from "./SignInPage";
 let renderer;
 const text = (node) => typeof node === "string" ? node : node.children?.map(text).join("") || "";
 const button = (name) => renderer.root.findAllByType("button").find((node) => text(node).trim() === name);
-const props = { onBack: vi.fn(), onSignedIn: vi.fn(), onContinueAsGuest: vi.fn() };
+const props = { onBack: vi.fn(), onSignedIn: vi.fn() };
 beforeEach(() => {
   vi.resetAllMocks();
   Object.assign(auth, { user: null, authError: null, isFirebaseConfigured: true, loginWithGoogle: vi.fn(), clearAuthError: vi.fn() });
@@ -18,13 +18,12 @@ afterEach(() => act(() => renderer?.unmount()));
 const render = () => act(async () => { renderer = create(<SignInPage {...props} />); });
 
 describe("Sign-in page", () => {
-  it("signs in with Google and offers guest and back navigation", async () => {
+  it("signs in with Google only and offers back navigation", async () => {
     await render();
     await act(async () => button("Continue with Google").props.onClick());
     expect(auth.loginWithGoogle).toHaveBeenCalledOnce();
-    act(() => button("Continue without an account").props.onClick());
+    expect(button("Continue without an account")).toBeUndefined();
     act(() => button("Back to home").props.onClick());
-    expect(props.onContinueAsGuest).toHaveBeenCalledOnce();
     expect(props.onBack).toHaveBeenCalledOnce();
   });
   it("redirects users who are already signed in", async () => {
