@@ -1,11 +1,12 @@
 import React from "react";
-import { LayoutDashboard, Code2, FolderGit2, ShieldCheck, MessageSquare, History, Command, Settings, Plus, LogOut } from "lucide-react";
+import { LayoutDashboard, Code2, FolderGit2, Gauge, MessageSquare, History, Command, Settings, Plus, LogOut } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 
 const NAVIGATION = [
   ["dashboard", "Overview", LayoutDashboard], ["projects", "Projects", FolderGit2],
-  ["findings", "Findings inbox", ShieldCheck], ["repos", "Connect repository", Plus],
-  ["chat", "Project Q&A", MessageSquare], ["workspace", "Snippet tools", Code2], ["history", "Snippet history", History],
+  ["repos", "Connect repository", Plus],
+  ["chat", "Project Q&A", MessageSquare], ["workspace", "Snippet tools", Code2],
+  ["quality", "Quality report", Gauge], ["history", "Snippet history", History],
   ["settings", "Settings", Settings],
 ];
 

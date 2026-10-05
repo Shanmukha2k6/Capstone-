@@ -1,7 +1,7 @@
 import React from "react";
 import { PanelLeft, Home } from "lucide-react";
 
-const names = { dashboard: "Overview", projects: "Projects", findings: "Findings inbox", workspace: "Snippet tools", repos: "Connect repository",
+const names = { dashboard: "Overview", projects: "Projects", workspace: "Snippet tools", repos: "Connect repository",
   quality: "Quality report", chat: "Project Q&A", history: "Snippet history", settings: "Settings" };
 
 export default function Navbar({ onGoHome, sidebarOpen, setSidebarOpen, activeTab }) {
