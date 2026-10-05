@@ -1,10 +1,14 @@
 import React from "react";
 import { act, create } from "react-test-renderer";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import Settings from "./Settings";
+import DataSettings from "../components/settings/DataSettings";
 
 const mock = vi.hoisted(() => ({ getGeminiSettings: vi.fn(), saveGeminiKey: vi.fn(), removeGeminiKey: vi.fn() }));
 vi.mock("../api/client", () => ({ api: mock }));
-import Settings from "./Settings";
+const auth = vi.hoisted(() => ({ user: { displayName: "Ada", email: "ada@example.com", metadata: {} }, logout: vi.fn() }));
+vi.mock("../context/AuthContext", () => ({ useAuth: () => auth }));
+import GeminiKeySettings from "../components/settings/GeminiKeySettings";
 
 let renderer;
 const text = (node) => typeof node === "string" ? node : node.children?.map(text).join("") || "";
@@ -13,7 +17,7 @@ const button = (name) => renderer.root.findAllByType("button").find((node) => te
 const status = { configured: false, session_key: false, source: "none", model: "gemini-model" };
 beforeEach(() => { vi.resetAllMocks(); mock.getGeminiSettings.mockResolvedValue(status); });
 afterEach(() => act(() => renderer?.unmount()));
-const render = () => act(async () => { renderer = create(<Settings onOpenRepositories={vi.fn()} />); });
+const render = () => act(async () => { renderer = create(<GeminiKeySettings onOpenRepositories={vi.fn()} />); });
 const typeKey = () => act(async () => input().props.onChange({ target: { value: "test-session-key-1234567890" } }));
 const submit = () => act(async () => renderer.root.findByType("form").props.onSubmit({ preventDefault() {} }));
 
@@ -41,5 +45,31 @@ describe("Gemini settings", () => {
     await render(); await typeKey(); await submit();
     expect(text(renderer.root.findByProps({ role: "alert" }))).toContain("Backend unavailable");
     expect(text(renderer.root)).not.toContain("Session key saved.");
+  });
+});
+
+describe("Settings layout", () => {
+  it("opens on the account tab with sign-out and switches tabs", async () => {
+    await act(async () => { renderer = create(<Settings onOpenRepositories={vi.fn()} />); });
+    expect(text(renderer.root)).toContain("ada@example.com");
+    await act(async () => button("Sign out").props.onClick());
+    expect(auth.logout).toHaveBeenCalledOnce();
+    act(() => button("AI provider").props.onClick());
+    expect(text(renderer.root)).toContain("Gemini API key");
+  });
+  it("opens the AI tab when requested", async () => {
+    await act(async () => { renderer = create(<Settings initialTab="ai" onOpenRepositories={vi.fn()} />); });
+    expect(input().props.type).toBe("password");
+  });
+});
+
+describe("Workspace data", () => {
+  it("requires confirmation before clearing snippet history", async () => {
+    const historyState = { history: [{ id: 1 }, { id: 2 }], clear: vi.fn().mockResolvedValue() };
+    act(() => { renderer = create(<DataSettings security={{ projects: [], reviews: [], cloud: true }} historyState={historyState} onOpenProjects={vi.fn()} />); });
+    act(() => button("Clear history").props.onClick());
+    expect(historyState.clear).not.toHaveBeenCalled();
+    await act(async () => button("Delete 2 items").props.onClick());
+    expect(historyState.clear).toHaveBeenCalledOnce();
   });
 });

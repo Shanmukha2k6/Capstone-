@@ -1,7 +1,7 @@
 import React from "react";
 import { Code2, FolderGit2, Gauge, MessageSquare, History, Settings } from "lucide-react";
 const pages = {
-  settings: ["MAKE IT YOURS", "Settings", "Your Gemini connection and workspace appearance.", Settings],
+  settings: ["MAKE IT YOURS", "Settings", "Manage your account, AI key, and workspace data.", Settings],
   workspace: ["YOUR CODE, UPGRADED", "Code workspace", "Paste a snippet. Pick a tool. Find your next improvement.", Code2],
   repos: ["GITHUB CONNECTION", "Connect a repository", "Create a saved project for source reviews and finding decisions.", FolderGit2],
   quality: ["MAKE GOOD CODE GREAT", "Quality report", "A closer look at security, complexity, and maintainability.", Gauge],

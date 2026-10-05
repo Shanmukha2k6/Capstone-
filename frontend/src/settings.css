@@ -1,0 +1,43 @@
+/* Settings: tabbed layout. Selectors are scoped under .settings-layout so they win over index.css. */
+.settings-layout { display: grid; grid-template-columns: 210px minmax(0, 1fr); gap: 28px; align-items: start; max-width: 1080px; }
+.settings-layout .settings-page { max-width: none; }
+.settings-tabs { position: sticky; top: 0; display: flex; flex-direction: column; gap: 4px; }
+.settings-tabs button { display: flex; align-items: center; gap: 10px; width: 100%; padding: 10px 12px; border: 0; border-radius: 9px; background: transparent; color: #a8acc5; font-size: 13px; font-weight: 550; text-align: left; transition: background .15s, color .15s; }
+.settings-tabs button:hover { background: #191c2a; color: #edeefa; }
+.settings-tabs button.active { background: #2e2449; color: #c4abff; }
+
+.settings-layout .settings-row { display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap; }
+.settings-layout .settings-row > div { flex: 1; min-width: 220px; }
+.settings-danger { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 10px 14px; border-radius: 9px; border: 1px solid rgba(244,63,94,.35); background: rgba(244,63,94,.08); color: #fb7185; font-size: 13px; font-weight: 600; white-space: nowrap; transition: background .15s; }
+.settings-danger:hover:not(:disabled) { background: rgba(244,63,94,.16); }
+.settings-danger.solid { background: #e11d48; border-color: #e11d48; color: #fff; }
+.settings-danger.solid:hover:not(:disabled) { background: #be123c; }
+.settings-confirm { display: flex; gap: 8px; flex-wrap: wrap; }
+.settings-layout .danger-zone { border-color: rgba(244,63,94,.25); }
+
+/* Account */
+.account-profile { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+.account-profile > div { flex: 1; min-width: 0; }
+.account-profile h2 { font-size: 20px; }
+.account-profile p { margin: 2px 0 0; overflow: hidden; text-overflow: ellipsis; }
+.account-avatar { width: 64px; height: 64px; flex-shrink: 0; border-radius: 18px; overflow: hidden; display: grid; place-items: center; background: #2e2449; color: #c4abff; }
+.account-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.account-details { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1px; margin: 24px 0 0; border: 1px solid #303449; border-radius: 12px; overflow: hidden; background: #303449; }
+.account-details > div { padding: 14px 16px; background: #141722; min-width: 0; }
+.account-details dt { font-size: 11px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: #9599b4; }
+.account-details dd { margin: 5px 0 0; font-size: 13.5px; color: #edeefa; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.settings-layout .settings-card .settings-help { margin: 16px 0 0; }
+.settings-layout form .settings-help { margin: 11px 0 20px; }
+
+/* Data */
+.data-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-top: 20px; }
+.data-stats > div { display: flex; flex-direction: column; gap: 6px; padding: 16px; border-radius: 12px; background: #141722; border: 1px solid #303449; color: #c4abff; }
+.data-stats strong { font-size: 26px; font-weight: 750; letter-spacing: -.03em; color: #edeefa; line-height: 1.1; }
+.data-stats span { font-size: 12px; color: #9599b4; }
+
+@media (max-width: 899px) {
+  .settings-layout { grid-template-columns: 1fr; gap: 16px; }
+  .settings-tabs { position: static; flex-direction: row; overflow-x: auto; scrollbar-width: none; }
+  .settings-tabs button { width: auto; white-space: nowrap; }
+}
+@media (max-width: 560px) { .account-details, .data-stats { grid-template-columns: 1fr; } }

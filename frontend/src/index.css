@@ -141,7 +141,7 @@ input:focus-visible, textarea:focus-visible, select:focus-visible { outline: 2px
 .quality-meter::-webkit-meter-bar { background: #303449; border: 0; border-radius: 8px; }
 .quality-meter::-webkit-meter-optimum-value { background: #a07be0; border-radius: 8px; }
 .quality-meter::-moz-meter-bar { background: #a07be0; border-radius: 8px; }
-.tool-settings > .settings-page { height: auto; min-height: 0; overflow: visible; }
+.tool-page.tool-settings > .settings-layout { height: auto; min-height: 0; overflow: visible; }
 .settings-page { display: grid; gap: 20px; max-width: 920px; padding-bottom: 24px; }
 .settings-card { background: #191c2a; border: 1px solid #303449; border-radius: 18px; padding: 28px; }
 .settings-card-heading { display: flex; flex-wrap: wrap; align-items: center; gap: 14px; margin-bottom: 22px; }
