@@ -8,6 +8,7 @@ from app.core.config import settings
 from app.models.schemas import ChatRequest
 from app.services.llm_gateway import GeminiProvider, GeminiScanError, LLMProvider, MockProvider, gateway, gemini_scan_configured
 from app.services.prompt_loader import render_prompt
+from app.services.repo_context import gather_repo_context
 from app.services.user_settings import scan_key
 
 
@@ -26,10 +27,14 @@ def chat_config(request: Request) -> dict:
 
 
 async def stream_chat(req: ChatRequest, provider: LLMProvider) -> AsyncGenerator[str, None]:
-    conversation = json.dumps(req.model_dump(), ensure_ascii=False)
-    system, prompt = render_prompt("repository_chat", {"conversation": conversation})
     try:
         async with asyncio.timeout(180):
+            snapshots = await gather_repo_context(req)
+            if snapshots:
+                yield f"data: {json.dumps({'status': 'Read ' + ', '.join(s['repository'] for s in snapshots) + ' from GitHub'})}\n\n"
+            data = dict(req.model_dump(), github_repositories=snapshots)
+            conversation = json.dumps(data, ensure_ascii=False)
+            system, prompt = render_prompt("repository_chat", {"conversation": conversation})
             async for token in provider.stream(prompt=prompt, system=system):
                 yield f"data: {json.dumps({'token': token})}\n\n"
         yield "data: [DONE]\n\n"
